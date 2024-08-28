@@ -22,7 +22,5 @@ function execute<Data, Extensions = {}>(
   return [request, cancel];
 }
 
-export {
-    client,
-    execute
-};
+export { client, execute };
+

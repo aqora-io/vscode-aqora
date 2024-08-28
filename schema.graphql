@@ -1,0 +1,1221 @@
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}
+
+directive @ifAllowed on FIELD
+
+enum Action {
+  ADD_COMPETITION_MEMBER
+  ADD_EVENT_COMPETITION
+  ADD_EVENT_MEMBER
+  AWARD_BADGE
+  CREATE_COMMENT
+  CREATE_COMPETITION
+  CREATE_COMPETITION_RULE_AGREEMENT
+  CREATE_EVENT
+  CREATE_FORUM
+  CREATE_ORGANIZATION
+  CREATE_SUBJECT_SUBSCRIPTION
+  CREATE_SUBMISSION_VERSION
+  CREATE_TAG
+  CREATE_TOPIC
+  CREATE_USE_CASE_VERSION
+  DELETE_COMMENT
+  DELETE_COMPETITION
+  DELETE_EVENT
+  DELETE_FORUM
+  DELETE_ORGANIZATION
+  DELETE_SUBJECT_SUBSCRIPTION
+  DELETE_TAG
+  DELETE_TOPIC
+  DELETE_USER
+  PUBLISH_VOTE
+  READ_COMMENT
+  READ_COMPETITION
+  READ_COMPETITION_MEMBERSHIP
+  READ_COMPETITION_RULE
+  READ_COMPETITION_RULE_AGREEMENT
+  READ_EVENT
+  READ_EVENT_COMPETITION
+  READ_EVENT_MEMBERSHIP
+  READ_PROJECT_VERSION
+  READ_PROJECT_VERSION_EVALUATION
+  READ_PROJECT_VERSION_FILE
+  READ_SUBJECT_SUBSCRIPTION
+  READ_TOPIC
+  READ_USER_EMAIL
+  READ_USER_NOTIFICATIONS
+  READ_USER_PERMISSIONS
+  REMOVE_COMPETITION_MEMBER
+  REMOVE_EVENT_COMPETITION
+  REMOVE_EVENT_MEMBER
+  REMOVE_ORGANIZATION_MEMBER
+  SET_COMPETITION_ORDERING_PRIORITY
+  TRANSFER_COMPETITION_OWNERSHIP
+  TRANSFER_EVENT_OWNERSHIP
+  TRANSFER_ORGANIZATION_OWNERSHIP
+  UPDATE_AGENDA
+  UPDATE_COMMENT
+  UPDATE_COMPETITION
+  UPDATE_EVENT
+  UPDATE_FORUM
+  UPDATE_ORGANIZATION
+  UPDATE_ORGANIZATION_MEMBERSHIP
+  UPDATE_PROJECT_VERSION
+  UPDATE_PROJECT_VERSION_FILE
+  UPDATE_TOPIC
+  UPDATE_USER
+  UPLOAD_FILES
+}
+
+enum ArchiveKind {
+  TAR
+  ZIP
+}
+
+enum Badge {
+  PARIS_2024_HACKERS
+  PARIS_2024_WINNERS
+  TEST
+}
+
+type Comment implements Node & Votable {
+  author: User!
+  children(after: String, before: String, first: Int, last: Int, order: VotableOrder): CommentConnection!
+  content: String!
+  createdAt: DateTime!
+  edited: Boolean!
+  id: ID!
+  numChildren: Int!
+  parent: Comment
+  topic: Topic!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+  voted: EntityVote
+  votes: Int!
+}
+
+type CommentConnection {
+  """A list of edges."""
+  edges: [CommentEdge!]!
+  """A list of nodes."""
+  nodes: [Comment!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type CommentEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  hotness: Float!
+  """The item at the end of the edge"""
+  node: Comment!
+}
+
+type Competition implements Node & Subscribable {
+  banner: Url
+  createdAt: DateTime!
+  description: String
+  entityRuleAgreements(after: String, before: String, entity: UsernameOrID, first: Int, last: Int): CompetitionRuleAgreementConnection!
+  entitySubscription(entity: UsernameOrID): SubjectSubscription
+  host: Entity!
+  id: ID!
+  isPrivate: Boolean!
+  latestRule: CompetitionRule!
+  leaderboard(after: String, before: String, first: Int, last: Int): ProjectVersionEvaluationConnection!
+  members(after: String, before: String, first: Int, last: Int): CompetitionMembershipConnection!
+  rules(after: String, before: String, first: Int, last: Int): CompetitionRuleConnection!
+  shortDescription: String!
+  slug: String!
+  submission(entity: UsernameOrID): Submission
+  submissions(after: String, before: String, entityId: ID, first: Int, last: Int): SubmissionConnection!
+  tags(after: String, before: String, first: Int, last: Int): TagConnection!
+  thumbnail: Url
+  title: String!
+  topics(after: String, before: String, first: Int, last: Int, order: VotableOrder): TopicConnection!
+  useCase: UseCase!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+type CompetitionConnection {
+  """A list of edges."""
+  edges: [CompetitionEdge!]!
+  """A list of nodes."""
+  nodes: [Competition!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type CompetitionEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: Competition!
+}
+
+type CompetitionMembership implements Node {
+  competition: Competition!
+  entity: Entity!
+  id: ID!
+  kind: CompetitionMembershipKind!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+type CompetitionMembershipConnection {
+  """A list of edges."""
+  edges: [CompetitionMembershipEdge!]!
+  """A list of nodes."""
+  nodes: [CompetitionMembership!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type CompetitionMembershipEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: CompetitionMembership!
+}
+
+enum CompetitionMembershipKind {
+  HOST
+  PARTICIPANT
+}
+
+type CompetitionRule implements Node {
+  competition: Competition!
+  createdAt: DateTime!
+  entityAgreement(entity: UsernameOrID): CompetitionRuleAgreement
+  id: ID!
+  text: String!
+}
+
+type CompetitionRuleAgreement implements Node {
+  competitionRule: CompetitionRule!
+  createdAt: DateTime!
+  entity: Entity!
+  id: ID!
+}
+
+type CompetitionRuleAgreementConnection {
+  """A list of edges."""
+  edges: [CompetitionRuleAgreementEdge!]!
+  """A list of nodes."""
+  nodes: [CompetitionRuleAgreement!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type CompetitionRuleAgreementEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: CompetitionRuleAgreement!
+}
+
+type CompetitionRuleConnection {
+  """A list of edges."""
+  edges: [CompetitionRuleEdge!]!
+  """A list of nodes."""
+  nodes: [CompetitionRule!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type CompetitionRuleEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: CompetitionRule!
+}
+
+type CompetitionSubscription implements Node & SubjectSubscription {
+  competition: Competition!
+  createdAt: DateTime!
+  entity: Entity!
+  id: ID!
+  kind: SubjectKind!
+  subject: Subscribable!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+input CreateCommentInput {
+  content: String!
+}
+
+input CreateCompetitionInput {
+  banner: Upload
+  description: String
+  isPrivate: Boolean!
+  shortDescription: String!
+  slug: String!
+  tagIds: [ID]
+  thumbnail: Upload
+  title: String!
+}
+
+input CreateEventInput {
+  banner: Upload
+  description: String
+  isPrivate: Boolean!
+  shortDescription: String!
+  slug: String!
+  thumbnail: Upload
+  title: String!
+}
+
+input CreateForumInput {
+  description: String
+  icon: Upload
+  orderingPriority: Int
+  shortDescription: String!
+  slug: String!
+  title: String!
+}
+
+type CreateMultipartUploadResponse {
+  uploadId: String!
+  urls: [Url!]!
+}
+
+input CreateOrganizationInput {
+  bio: String
+  displayName: String!
+  github: String
+  image: Upload
+  linkedin: String
+  location: String
+  username: String!
+  website: Url
+}
+
+input CreatePasswordResetInput {
+  usernameOrEmail: String!
+}
+
+input CreateTagInput {
+  name: String!
+}
+
+input CreateTopicInput {
+  description: String
+  title: String!
+}
+
+"""
+Implement the DateTime<FixedOffset> scalar
+
+The input/output is a string in RFC3339 format.
+"""
+scalar DateTime
+
+type DeletedComment {
+  commentId: ID!
+  parentId: ID
+  topicId: ID!
+}
+
+interface Entity {
+  badges(after: String, before: String, first: Int, last: Int): EntityBadgeConnection!
+  bio: String
+  createdAt: DateTime!
+  displayName: String!
+  github: String
+  id: ID!
+  image: Url
+  imageThumbnail: Url
+  kind: EntityKind!
+  linkedin: String
+  location: String
+  subjectSubscriptions(after: String, before: String, first: Int, kinds: [SubjectKind!], last: Int): SubjectSubscriptionConnection!
+  submissions(after: String, before: String, competitionId: ID, first: Int, last: Int): SubmissionConnection!
+  username: String!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+  website: String
+}
+
+type EntityBadge implements Node {
+  badge: Badge!
+  createdAt: DateTime!
+  id: ID!
+}
+
+type EntityBadgeConnection {
+  """A list of edges."""
+  edges: [EntityBadgeEdge!]!
+  """A list of nodes."""
+  nodes: [EntityBadge!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type EntityBadgeEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: EntityBadge!
+}
+
+type EntityConnection {
+  """A list of edges."""
+  edges: [EntityEdge!]!
+  """A list of nodes."""
+  nodes: [Entity!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type EntityEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: Entity!
+}
+
+enum EntityKind {
+  ORGANIZATION
+  USER
+}
+
+type EntityVote {
+  score: Int!
+  subject: VotableEdge!
+  votedAt: DateTime!
+}
+
+type Event implements Node {
+  agenda: JSON
+  banner: Url
+  competitions(after: String, before: String, first: Int, last: Int): EventCompetitionConnection!
+  createdAt: DateTime!
+  description: String
+  host: Entity!
+  id: ID!
+  isPrivate: Boolean!
+  members(after: String, before: String, first: Int, last: Int, userIsOrgMember: ID): EventMembershipConnection!
+  shortDescription: String!
+  slug: String!
+  thumbnail: Url
+  title: String!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+type EventCompetition implements Node {
+  competition: Competition!
+  event: Event!
+  id: ID!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+type EventCompetitionConnection {
+  """A list of edges."""
+  edges: [EventCompetitionEdge!]!
+  """A list of nodes."""
+  nodes: [EventCompetition!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type EventCompetitionEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: EventCompetition!
+}
+
+type EventConnection {
+  """A list of edges."""
+  edges: [EventEdge!]!
+  """A list of nodes."""
+  nodes: [Event!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type EventEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: Event!
+}
+
+type EventMembership implements Node {
+  entity: Entity!
+  event: Event!
+  id: ID!
+  kind: EventMembershipKind!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+type EventMembershipConnection {
+  """A list of edges."""
+  edges: [EventMembershipEdge!]!
+  """A list of nodes."""
+  nodes: [EventMembership!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type EventMembershipEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: EventMembership!
+}
+
+enum EventMembershipKind {
+  HOST
+  PARTICIPANT
+}
+
+type FileBrowser {
+  readDir(after: String, first: Int, path: String): FileBrowserEntryConnection!
+  readMeta(path: String): FileBrowserEntry
+}
+
+type FileBrowserDirectoryEntry implements FileBrowserEntry {
+  kind: FileBrowserEntryKind!
+  name: String!
+}
+
+interface FileBrowserEntry {
+  kind: FileBrowserEntryKind!
+  name: String!
+}
+
+type FileBrowserEntryConnection {
+  """A list of edges."""
+  edges: [FileBrowserEntryEdge!]!
+  """A list of nodes."""
+  nodes: [FileBrowserEntry!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type FileBrowserEntryEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: FileBrowserEntry!
+}
+
+enum FileBrowserEntryKind {
+  DIRECTORY
+  FILE
+}
+
+type FileBrowserFileEntry implements FileBrowserEntry {
+  contentLength: Int!
+  contentType: String!
+  downloadUrl: Url!
+  kind: FileBrowserEntryKind!
+  mode: Int!
+  name: String!
+}
+
+type FinishUploadFile {
+  downloadUrl: Url!
+}
+
+input FinishUploadFileInput {
+  key: String!
+}
+
+type Forum implements Node & Subscribable {
+  createdAt: DateTime!
+  entitySubscription(entity: UsernameOrID): SubjectSubscription
+  icon: Url
+  id: ID!
+  orderingPriority: Int!
+  shortDescription: String!
+  slug: String!
+  title: String!
+  topics(after: String, before: String, first: Int, last: Int, order: VotableOrder): TopicConnection!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+type ForumConnection {
+  """A list of edges."""
+  edges: [ForumEdge!]!
+  """A list of nodes."""
+  nodes: [Forum!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type ForumEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: Forum!
+}
+
+type ForumSubscription implements Node & SubjectSubscription {
+  createdAt: DateTime!
+  entity: Entity!
+  forum: Forum!
+  id: ID!
+  kind: SubjectKind!
+  subject: Subscribable!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+type InitUploadFile {
+  key: String!
+  uploadUrl: Url!
+}
+
+input InitUploadFileInput {
+  contentLength: Int!
+  contentType: String!
+  filename: String!
+}
+
+"""A scalar that can represent any JSON value."""
+scalar JSON
+
+input LoginUserInput {
+  password: String!
+  usernameOrEmail: String!
+}
+
+type Mutation {
+  addCompetitionMember(competitionId: ID!, entityId: ID!): CompetitionMembershipEdge!
+  addEventCompetition(competitionId: ID!, eventId: ID!): EventCompetitionEdge!
+  addEventMember(entityId: ID!, eventId: ID!): EventMembershipEdge!
+  agreeToCompetitionRule(asEntity: UsernameOrID, competition: ID!): CompetitionRuleAgreement!
+  awardBadge(badge: Badge!, entityId: ID!): EntityBadgeEdge!
+  completeProjectVersionFileMultipartUpload(eTags: [String!]!, id: ID!, uploadId: String!): ProjectVersionFile!
+  createCommentForComment(commentId: ID!, input: CreateCommentInput!): CommentEdge!
+  createCommentForTopic(input: CreateCommentInput!, topicId: ID!): CommentEdge!
+  createCompetition(input: CreateCompetitionInput!): CompetitionEdge!
+  createEvent(input: CreateEventInput!): EventEdge!
+  createForum(input: CreateForumInput!): ForumEdge!
+  createOrganization(input: CreateOrganizationInput!): OrganizationEdge!
+  createPasswordReset(input: CreatePasswordResetInput!): Boolean!
+  createProjectVersionFileMultipartUpload(chunks: [Int!]!, contentType: String, id: ID!): CreateMultipartUploadResponse!
+  createSubmissionVersion(asEntity: UsernameOrID, competitionId: ID!, input: UpdateSubmissionInput!): ProjectVersionEdge!
+  createTag(entityId: ID!, input: CreateTagInput!): TagEdge!
+  createTopicForCompetition(competitionId: ID!, input: CreateTopicInput!): TopicEdge!
+  createTopicForForum(forumId: ID!, input: CreateTopicInput!): TopicEdge!
+  createUseCaseVersion(competitionId: ID!, input: UpdateUseCaseInput!): ProjectVersionEdge!
+  deleteComment(id: ID!): ID!
+  deleteCompetition(id: ID!): ID!
+  deleteEvent(id: ID!): ID!
+  deleteForum(id: ID!): ID!
+  deleteOrganization(id: ID!): ID!
+  deleteTag(tagId: ID!): ID!
+  deleteTopic(id: ID!): ID!
+  deleteUser(id: ID!): ID!
+  finishUploadFile(input: FinishUploadFileInput!): FinishUploadFile!
+  initUploadFile(input: InitUploadFileInput!): InitUploadFile!
+  loginUser(input: LoginUserInput!): UserEdge!
+  logoutUser: Boolean!
+  oauth2Authorize(input: Oauth2AuthorizeInput!): Oauth2AuthorizeOutput!
+  oauth2Refresh(input: Oauth2RefreshInput!): Oauth2TokenOutput!
+  oauth2Token(input: Oauth2TokenInput!): Oauth2TokenOutput!
+  publishVote(id: ID!, kind: VoteKind!): VotableEdge!
+  removeCompetitionMember(id: ID!): ID!
+  removeEventCompetition(id: ID!): ID!
+  removeEventMember(id: ID!): ID!
+  removeOrganizationMember(id: ID!): ID!
+  resetPassword(input: ResetPasswordInput!): Boolean!
+  resetVote(id: ID!): VotableEdge!
+  setCompetitionOrderingPriority(id: ID!, priority: Int!): CompetitionEdge!
+  setUserNotificationSubscription(notification: NotificationKind!, subscribe: Boolean!): UserEdge!
+  signupUser(input: SignupUserInput!): UserEdge!
+  subscribeToSubject(asEntity: UsernameOrID, subject: ID!): SubjectSubscriptionEdge!
+  transferCompetitionOwnership(competitionId: ID!, toEntityId: ID!): [CompetitionMembershipEdge!]!
+  transferEventOwnership(eventId: ID!, toEntityId: ID!): [EventMembershipEdge!]!
+  transferOrganizationOwnership(organizationId: ID!, toUserId: ID!): [OrganizationMembershipEdge!]!
+  unsubscribeFromAllNotifications: UserEdge!
+  unsubscribeFromSubject(subscription: ID!): ID!
+  unsubscribeNotificationForToken(token: String!): NotificationKind
+  updateComment(id: ID!, input: UpdateCommentInput!): CommentEdge!
+  updateCompetition(id: ID!, input: UpdateCompetitionInput!): CompetitionEdge!
+  updateEvent(id: ID!, input: UpdateEventInput!): EventEdge!
+  updateEventAgenda(eventId: ID!, input: UpdateAgendaInput!): EventEdge!
+  updateForum(id: ID!, input: UpdateForumInput!): ForumEdge!
+  updateOrganization(id: ID!, input: UpdateOrganizationInput!): OrganizationEdge!
+  updateOrganizationMembership(kind: OrganizationMembershipKind!, organizationId: ID!, userId: ID!): OrganizationMembershipEdge!
+  updateTopic(id: ID!, input: UpdateTopicInput!): Topic!
+  updateUser(id: ID!, input: UpdateUserInput!): UserEdge!
+  validateSubmissionVersion(projectVersionId: ID!): ProjectVersionEdge!
+  validateUseCaseVersion(projectVersionId: ID!): ProjectVersionEdge!
+  withdrawBadge(id: ID!): ID!
+}
+
+interface Node {
+  id: ID!
+}
+
+enum NotificationKind {
+  AWARD_BADGE
+  CREATE_SUBMISSION
+  CREATE_TOPIC
+  REPLY_TOPIC
+}
+
+input Oauth2AuthorizeInput {
+  clientId: String!
+  redirectUri: Url
+  state: String
+}
+
+type Oauth2AuthorizeOutput {
+  clientError: Boolean!
+  redirectUri: Url
+  unauthorized: Boolean!
+}
+
+input Oauth2RefreshInput {
+  clientId: String!
+  refreshToken: String!
+}
+
+type Oauth2Token {
+  accessToken: String!
+  expiresIn: Int!
+  refreshToken: String!
+  scope: String!
+}
+
+input Oauth2TokenInput {
+  clientId: String!
+  code: String!
+  redirectUri: Url!
+}
+
+type Oauth2TokenOutput {
+  clientError: Boolean!
+  issued: Oauth2Token
+  unauthorized: Boolean!
+}
+
+type Organization implements Entity & Node {
+  badges(after: String, before: String, first: Int, last: Int): EntityBadgeConnection!
+  bio: String
+  createdAt: DateTime!
+  displayName: String!
+  github: String
+  id: ID!
+  image: Url
+  imageThumbnail: Url
+  kind: EntityKind!
+  linkedin: String
+  location: String
+  subjectSubscriptions(after: String, before: String, first: Int, kinds: [SubjectKind!], last: Int): SubjectSubscriptionConnection!
+  submissions(after: String, before: String, competitionId: ID, first: Int, last: Int): SubmissionConnection!
+  userMembership(user: UsernameOrID): OrganizationMembership
+  username: String!
+  users(after: String, before: String, first: Int, last: Int): OrganizationMembershipConnection!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+  website: String
+}
+
+"""An edge in a connection."""
+type OrganizationEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: Organization!
+}
+
+type OrganizationMembership implements Node {
+  id: ID!
+  kind: OrganizationMembershipKind!
+  organization: Organization!
+  user: User!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+type OrganizationMembershipConnection {
+  """A list of edges."""
+  edges: [OrganizationMembershipEdge!]!
+  """A list of nodes."""
+  nodes: [OrganizationMembership!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type OrganizationMembershipEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: OrganizationMembership!
+}
+
+enum OrganizationMembershipKind {
+  ADMIN
+  EDITOR
+  OWNER
+  READER
+}
+
+"""Information about pagination in a connection"""
+type PageInfo {
+  """When paginating forwards, the cursor to continue."""
+  endCursor: String
+  """When paginating forwards, are there more items?"""
+  hasNextPage: Boolean!
+  """When paginating backwards, are there more items?"""
+  hasPreviousPage: Boolean!
+  """When paginating backwards, the cursor to continue."""
+  startCursor: String
+}
+
+input Permission {
+  actingAs: UsernameOrID
+  on: ID
+  to: Action!
+}
+
+interface Project {
+  competition: Competition!
+  id: ID!
+  latest: ProjectVersion
+  name: String!
+  version(version: Semver): ProjectVersion
+  versions(after: String, before: String, first: Int, last: Int): ProjectVersionConnection!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+type ProjectVersion implements Node {
+  createdAt: DateTime!
+  entity: Entity!
+  evaluation: ProjectVersionEvaluation
+  fileByKind(kind: ProjectVersionFileKind!): ProjectVersionFile
+  files: [ProjectVersionFile!]!
+  id: ID!
+  latest: Boolean!
+  project: Project!
+  pyprojectToml: String!
+  pythonRequires: String
+  readme: String
+  validatedAt: DateTime
+  version: Semver!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+type ProjectVersionConnection {
+  """A list of edges."""
+  edges: [ProjectVersionEdge!]!
+  """A list of nodes."""
+  nodes: [ProjectVersion!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type ProjectVersionEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: ProjectVersion!
+}
+
+type ProjectVersionEvaluation implements Node {
+  createdAt: DateTime!
+  error: String
+  finalizedAt: DateTime
+  id: ID!
+  latest: Boolean!
+  max: Boolean!
+  projectVersion: ProjectVersion!
+  score: Float
+  submission: Submission!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+type ProjectVersionEvaluationConnection {
+  """A list of edges."""
+  edges: [ProjectVersionEvaluationEdge!]!
+  """A list of nodes."""
+  nodes: [ProjectVersionEvaluation!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type ProjectVersionEvaluationEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: ProjectVersionEvaluation!
+}
+
+type ProjectVersionFile implements Node {
+  browse: FileBrowser!
+  downloadUrl(archKind: ArchiveKind! = TAR): Url!
+  id: ID!
+  kind: ProjectVersionFileKind!
+  projectVersion: ProjectVersion!
+  uploadUrl: Url
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+enum ProjectVersionFileKind {
+  DATA
+  PACKAGE
+  SUBMISSION_EVALUATION
+  TEMPLATE
+}
+
+type Query {
+  competitionBySlug(slug: String!): Competition
+  competitions(after: String, before: String, first: Int, last: Int, search: String): CompetitionConnection!
+  entities(after: String, before: String, first: Int, kinds: [EntityKind!], last: Int, search: String): EntityConnection!
+  entityByUsername(username: String!): Entity
+  eventBySlug(slug: String!): Event
+  events(after: String, before: String, first: Int, last: Int, search: String): EventConnection!
+  forumBySlug(slug: String!): Forum
+  forums(after: String, before: String, first: Int, last: Int, search: String): ForumConnection!
+  node(id: ID!): Node!
+  tags(after: String, before: String, first: Int, last: Int): TagConnection!
+  version: Version!
+  viewer: User!
+}
+
+input ResetPasswordInput {
+  password: String!
+  secret: String!
+}
+
+scalar Semver
+
+input SignupUserInput {
+  bio: String
+  displayName: String!
+  email: String!
+  github: String
+  image: Upload
+  linkedin: String
+  location: String
+  password: String!
+  username: String!
+  website: Url
+}
+
+enum SubjectKind {
+  COMPETITION
+  FORUM
+  TOPIC
+}
+
+interface SubjectSubscription {
+  createdAt: DateTime!
+  entity: Entity!
+  id: ID!
+  kind: SubjectKind!
+  subject: Subscribable!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+type SubjectSubscriptionConnection {
+  """A list of edges."""
+  edges: [SubjectSubscriptionEdge!]!
+  """A list of nodes."""
+  nodes: [SubjectSubscription!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type SubjectSubscriptionEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: SubjectSubscription!
+}
+
+type Submission implements Node & Project {
+  competition: Competition!
+  entity: Entity!
+  id: ID!
+  latest: ProjectVersion
+  name: String!
+  version(version: Semver): ProjectVersion
+  versions(after: String, before: String, first: Int, last: Int): ProjectVersionConnection!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+type SubmissionConnection {
+  """A list of edges."""
+  edges: [SubmissionEdge!]!
+  """A list of nodes."""
+  nodes: [Submission!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type SubmissionEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: Submission!
+}
+
+interface Subscribable {
+  entitySubscription(entity: UsernameOrID): SubjectSubscription
+  id: ID!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+type Subscription {
+  deletedComments(topicId: ID): DeletedComment!
+  newComments(topicId: ID): CommentEdge!
+  updatedComments(topicId: ID): CommentEdge!
+}
+
+type Tag implements Node {
+  id: ID!
+  name: String!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+type TagConnection {
+  """A list of edges."""
+  edges: [TagEdge!]!
+  """A list of nodes."""
+  nodes: [Tag!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type TagEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: Tag!
+}
+
+type Topic implements Node & Subscribable & Votable {
+  author: Entity!
+  commentCount: Int!
+  comments(after: String, before: String, first: Int, last: Int, order: VotableOrder): CommentConnection!
+  competition: Competition
+  createdAt: DateTime!
+  description: String
+  entitySubscription(entity: UsernameOrID): SubjectSubscription
+  forum: Forum
+  id: ID!
+  title: String!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+  voted: EntityVote
+  votes: Int!
+}
+
+type TopicConnection {
+  """A list of edges."""
+  edges: [TopicEdge!]!
+  """A list of nodes."""
+  nodes: [Topic!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type TopicEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  hotness: Float!
+  """The item at the end of the edge"""
+  node: Topic!
+}
+
+type TopicSubscription implements Node & SubjectSubscription {
+  createdAt: DateTime!
+  entity: Entity!
+  id: ID!
+  kind: SubjectKind!
+  subject: Subscribable!
+  topic: Topic!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+input UpdateAgendaInput {
+  agenda: JSON
+}
+
+input UpdateCommentInput {
+  content: String!
+}
+
+input UpdateCompetitionInput {
+  banner: Upload
+  description: String
+  isPrivate: Boolean
+  rules: String
+  shortDescription: String
+  slug: String
+  tagIds: [ID]
+  thumbnail: Upload
+  title: String
+}
+
+input UpdateEventInput {
+  banner: Upload
+  description: String
+  isPrivate: Boolean
+  shortDescription: String
+  slug: String
+  thumbnail: Upload
+  title: String
+}
+
+input UpdateForumInput {
+  description: String
+  icon: Upload
+  orderingPriority: Int
+  shortDescription: String
+  slug: String
+  title: String
+}
+
+input UpdateOrganizationInput {
+  bio: String
+  displayName: String
+  github: String
+  image: Upload
+  linkedin: String
+  location: String
+  username: String
+  website: Url
+}
+
+input UpdateSubmissionInput {
+  pyprojectToml: String!
+  readme: String
+}
+
+input UpdateTopicInput {
+  description: String
+  title: String
+}
+
+input UpdateUseCaseInput {
+  pyprojectToml: String!
+  readme: String
+}
+
+input UpdateUserInput {
+  bio: String
+  displayName: String
+  email: String
+  github: String
+  image: Upload
+  jobTitle: String
+  linkedin: String
+  location: String
+  oldPassword: String
+  organization: String
+  password: String
+  username: String
+  website: Url
+}
+
+scalar Upload
+
+"""URL is a String implementing the [URL Standard](http://url.spec.whatwg.org/)"""
+scalar Url
+
+type UseCase implements Node & Project {
+  competition: Competition!
+  id: ID!
+  latest: ProjectVersion
+  name: String!
+  version(version: Semver): ProjectVersion
+  versions(after: String, before: String, first: Int, last: Int): ProjectVersionConnection!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+type User implements Entity & Node {
+  badges(after: String, before: String, first: Int, last: Int): EntityBadgeConnection!
+  bio: String
+  """can this user perform the action on the given resource"""
+  can(actingAs: UsernameOrID, action: Action!, on: ID): Boolean!
+  comments(after: String, before: String, first: Int, last: Int, order: VotableOrder): CommentConnection!
+  createdAt: DateTime!
+  displayName: String!
+  email: String!
+  entities(after: String, before: String, first: Int, last: Int, permission: Permission, search: String): EntityConnection!
+  github: String
+  id: ID!
+  image: Url
+  imageThumbnail: Url
+  jobTitle: String
+  kind: EntityKind!
+  linkedin: String
+  location: String
+  notifications: UserNotifications!
+  organization: String
+  organizations(after: String, before: String, first: Int, last: Int): OrganizationMembershipConnection!
+  subjectSubscriptions(after: String, before: String, first: Int, kinds: [SubjectKind!], last: Int): SubjectSubscriptionConnection!
+  submissions(after: String, before: String, competitionId: ID, first: Int, last: Int): SubmissionConnection!
+  topics(after: String, before: String, first: Int, last: Int, order: VotableOrder): TopicConnection!
+  username: String!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+  website: String
+}
+
+"""An edge in a connection."""
+type UserEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: User!
+}
+
+scalar UsernameOrID
+
+type UserNotifications {
+  disabled: [NotificationKind!]!
+  enabled: [NotificationKind!]!
+}
+
+type Version {
+  current: String!
+  gitCommit: String
+}
+
+interface Votable {
+  id: ID!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+  voted: EntityVote
+  votes: Int!
+}
+
+"""An edge in a connection."""
+type VotableEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: Votable!
+}
+
+enum VotableOrder {
+  HOT
+  NEWEST
+  OLDEST
+}
+
+enum VoteKind {
+  DOWNVOTE
+  UPVOTE
+}
