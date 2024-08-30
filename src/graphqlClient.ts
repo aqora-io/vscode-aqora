@@ -1,26 +1,19 @@
-import { ExecutionResult } from "graphql";
-import { createClient, RequestParams } from "graphql-http";
+import ApolloClient from "apollo-client";
 import { GlobalArgsImpl } from "./globalArgs";
+import { HttpLink } from "apollo-link-http";
+import { InMemoryCache } from "apollo-cache-inmemory";
+import { fetch } from "cross-fetch";
 
 const endpoint = GlobalArgsImpl.getInstance().graphqlUrl().toString();
-const client = createClient({ url: endpoint });
 
-function execute<Data, Extensions = {}>(
-  params: RequestParams,
-): [request: Promise<ExecutionResult<Data, Extensions>>, cancel: () => void] {
-  let cancel!: () => void;
-  const request = new Promise<ExecutionResult<Data, Extensions>>(
-    (resolve, reject) => {
-      let result: ExecutionResult<Data, Extensions>;
-      cancel = client.subscribe<Data, Extensions>(params, {
-        next: (data) => (result = data),
-        error: reject,
-        complete: () => resolve(result),
-      });
-    },
-  );
-  return [request, cancel];
+function createApolloClient() {
+  return new ApolloClient({
+    link: new HttpLink({
+      uri: endpoint,
+      fetch: fetch,
+    }),
+    cache: new InMemoryCache(),
+  });
 }
 
-export { client, execute };
-
+export const client = createApolloClient();

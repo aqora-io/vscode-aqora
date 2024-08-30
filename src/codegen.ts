@@ -10,6 +10,11 @@ const config: CodegenConfig = {
       config: {
         documentMode: "string",
       },
+      plugins: [
+        "typescript",
+        "typescript-operations",
+        "typescript-apollo-client-helpers",
+      ],
     },
     "./schema.graphql": {
       plugins: ["schema-ast"],

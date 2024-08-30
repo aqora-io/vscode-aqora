@@ -1,11 +1,11 @@
 import * as vscode from "vscode";
 import { exec } from "child_process";
 import * as os from "os";
-import { execute } from "./graphqlClient";
-import { EntityConnection } from "./graphql/graphql";
+import { gql } from "graphql-tag";
+import { Get_EntitiesQuery } from "./graphql/graphql";
+import { client } from "./graphqlClient";
 
 export function activate(context: vscode.ExtensionContext) {
-  console.log("HELLO");
   const disposable = vscode.commands.registerCommand("aqora.login", login);
 
   const entitiesDisposable = vscode.commands.registerCommand(
@@ -47,7 +47,7 @@ function login() {
   });
 }
 
-const GET_ENTITIES = `
+const GET_ENTITIES = gql`
   query GET_ENTITIES {
     entities {
       edges {
@@ -61,7 +61,9 @@ const GET_ENTITIES = `
   }
 `;
 
-const transformEntitiesToQuickPick = (entities: EntityConnection["edges"]) => {
+const transformEntitiesToQuickPick = (
+  entities: Get_EntitiesQuery["entities"]["edges"],
+) => {
   return entities.map((location) => ({
     label: location.node.username,
     details: location.node.bio,
@@ -70,11 +72,9 @@ const transformEntitiesToQuickPick = (entities: EntityConnection["edges"]) => {
 };
 
 async function entities() {
-  const [request, _cancel] = execute<{ entities: EntityConnection }>({
-    query: GET_ENTITIES,
-  });
-
-  const entities = (await request).data?.entities;
+  const {
+    data: { entities },
+  } = await client.query<Get_EntitiesQuery>({ query: GET_ENTITIES });
 
   if (!entities?.edges) {
     return;

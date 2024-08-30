@@ -56,8 +56,14 @@
   },
   "dependencies": {
     "@graphql-codegen/typescript": "^4.0.9",
+    "@graphql-codegen/typescript-apollo-client-helpers": "^3.0.0",
     "@graphql-codegen/typescript-operations": "^4.2.3",
-    "graphql": "^15.3.0",
-    "graphql-http": "^1.22.1"
+    "apollo-cache-inmemory": "^1.6.6",
+    "apollo-client": "^2.6.10",
+    "apollo-link-http": "^1.5.17",
+    "cross-fetch": "^4.0.0",
+    "graphql": "^15.9.0",
+    "graphql-http": "^1.22.1",
+    "graphql-tag": "^2.12.6"
   }
 }

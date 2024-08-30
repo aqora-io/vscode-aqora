@@ -1182,12 +1182,12 @@ type UserEdge {
   node: User!
 }
 
-scalar UsernameOrID
-
 type UserNotifications {
   disabled: [NotificationKind!]!
   enabled: [NotificationKind!]!
 }
+
+scalar UsernameOrID
 
 type Version {
   current: String!
