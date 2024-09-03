@@ -419,6 +419,7 @@ export type CreateEventInput = {
 
 export type CreateForumInput = {
   description?: InputMaybe<Scalars['String']['input']>;
+  guidelines?: InputMaybe<Scalars['String']['input']>;
   icon?: InputMaybe<Scalars['Upload']['input']>;
   orderingPriority?: InputMaybe<Scalars['Int']['input']>;
   shortDescription: Scalars['String']['input'];
@@ -779,6 +780,7 @@ export type Forum = Node & Subscribable & {
   __typename?: 'Forum';
   createdAt: Scalars['DateTime']['output'];
   entitySubscription?: Maybe<SubjectSubscription>;
+  guidelines?: Maybe<Scalars['String']['output']>;
   icon?: Maybe<Scalars['Url']['output']>;
   id: Scalars['ID']['output'];
   orderingPriority: Scalars['Int']['output'];
@@ -1970,6 +1972,7 @@ export type UpdateEventInput = {
 
 export type UpdateForumInput = {
   description?: InputMaybe<Scalars['String']['input']>;
+  guidelines?: InputMaybe<Scalars['String']['input']>;
   icon?: InputMaybe<Scalars['Upload']['input']>;
   orderingPriority?: InputMaybe<Scalars['Int']['input']>;
   shortDescription?: InputMaybe<Scalars['String']['input']>;
@@ -2208,10 +2211,10 @@ export enum VoteKind {
   Upvote = 'UPVOTE'
 }
 
-export type Get_EntitiesQueryVariables = Exact<{ [key: string]: never; }>;
+export type Get_CompetitionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type Get_EntitiesQuery = { __typename?: 'Query', entities: { __typename?: 'EntityConnection', edges: Array<{ __typename?: 'EntityEdge', node: { __typename?: 'Organization', username: string, bio?: string | null, id: string } | { __typename?: 'User', username: string, bio?: string | null, id: string } }> } };
+export type Get_CompetitionsQuery = { __typename?: 'Query', competitions: { __typename?: 'CompetitionConnection', edges: Array<{ __typename?: 'CompetitionEdge', node: { __typename?: 'Competition', id: string, slug: string, shortDescription: string } }> } };
 
 export class TypedDocumentString<TResult, TVariables>
   extends String
@@ -2228,19 +2231,19 @@ export class TypedDocumentString<TResult, TVariables>
   }
 }
 
-export const Get_EntitiesDocument = new TypedDocumentString(`
-    query GET_ENTITIES {
-  entities {
+export const Get_CompetitionsDocument = new TypedDocumentString(`
+    query GET_COMPETITIONS {
+  competitions {
     edges {
       node {
-        username
-        bio
         id
+        slug
+        shortDescription
       }
     }
   }
 }
-    `) as unknown as TypedDocumentString<Get_EntitiesQuery, Get_EntitiesQueryVariables>;
+    `) as unknown as TypedDocumentString<Get_CompetitionsQuery, Get_CompetitionsQueryVariables>;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
   ID: { input: string; output: string; }
@@ -2652,6 +2655,7 @@ export type CreateEventInput = {
 
 export type CreateForumInput = {
   description?: InputMaybe<Scalars['String']['input']>;
+  guidelines?: InputMaybe<Scalars['String']['input']>;
   icon?: InputMaybe<Scalars['Upload']['input']>;
   orderingPriority?: InputMaybe<Scalars['Int']['input']>;
   shortDescription: Scalars['String']['input'];
@@ -3012,6 +3016,7 @@ export type Forum = Node & Subscribable & {
   __typename?: 'Forum';
   createdAt: Scalars['DateTime']['output'];
   entitySubscription?: Maybe<SubjectSubscription>;
+  guidelines?: Maybe<Scalars['String']['output']>;
   icon?: Maybe<Scalars['Url']['output']>;
   id: Scalars['ID']['output'];
   orderingPriority: Scalars['Int']['output'];
@@ -4203,6 +4208,7 @@ export type UpdateEventInput = {
 
 export type UpdateForumInput = {
   description?: InputMaybe<Scalars['String']['input']>;
+  guidelines?: InputMaybe<Scalars['String']['input']>;
   icon?: InputMaybe<Scalars['Upload']['input']>;
   orderingPriority?: InputMaybe<Scalars['Int']['input']>;
   shortDescription?: InputMaybe<Scalars['String']['input']>;
@@ -4441,10 +4447,10 @@ export enum VoteKind {
   Upvote = 'UPVOTE'
 }
 
-export type Get_EntitiesQueryVariables = Exact<{ [key: string]: never; }>;
+export type Get_CompetitionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type Get_EntitiesQuery = { __typename?: 'Query', entities: { __typename?: 'EntityConnection', edges: Array<{ __typename?: 'EntityEdge', node: { __typename?: 'Organization', username: string, bio?: string | null, id: string } | { __typename?: 'User', username: string, bio?: string | null, id: string } }> } };
+export type Get_CompetitionsQuery = { __typename?: 'Query', competitions: { __typename?: 'CompetitionConnection', edges: Array<{ __typename?: 'CompetitionEdge', node: { __typename?: 'Competition', id: string, slug: string, shortDescription: string } }> } };
 
 export type CommentKeySpecifier = ('author' | 'children' | 'content' | 'createdAt' | 'edited' | 'id' | 'numChildren' | 'parent' | 'topic' | 'viewerCan' | 'voted' | 'votes' | CommentKeySpecifier)[];
 export type CommentFieldPolicy = {
@@ -4743,10 +4749,11 @@ export type FinishUploadFileKeySpecifier = ('downloadUrl' | FinishUploadFileKeyS
 export type FinishUploadFileFieldPolicy = {
 	downloadUrl?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type ForumKeySpecifier = ('createdAt' | 'entitySubscription' | 'icon' | 'id' | 'orderingPriority' | 'shortDescription' | 'slug' | 'title' | 'topics' | 'viewerCan' | ForumKeySpecifier)[];
+export type ForumKeySpecifier = ('createdAt' | 'entitySubscription' | 'guidelines' | 'icon' | 'id' | 'orderingPriority' | 'shortDescription' | 'slug' | 'title' | 'topics' | 'viewerCan' | ForumKeySpecifier)[];
 export type ForumFieldPolicy = {
 	createdAt?: FieldPolicy<any> | FieldReadFunction<any>,
 	entitySubscription?: FieldPolicy<any> | FieldReadFunction<any>,
+	guidelines?: FieldPolicy<any> | FieldReadFunction<any>,
 	icon?: FieldPolicy<any> | FieldReadFunction<any>,
 	id?: FieldPolicy<any> | FieldReadFunction<any>,
 	orderingPriority?: FieldPolicy<any> | FieldReadFunction<any>,

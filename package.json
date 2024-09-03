@@ -14,12 +14,12 @@
   "contributes": {
     "commands": [
       {
-        "command": "aqora.entities",
-        "title": "Show entities"
+        "command": "aqora.templateCompetition",
+        "title": "Clone a template from aqora.io."
       },
       {
         "command": "aqora.login",
-        "title": "Login"
+        "title": "Login into aqora platform by using CLI."
       }
     ]
   },

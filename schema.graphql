@@ -272,6 +272,7 @@ input CreateEventInput {
 
 input CreateForumInput {
   description: String
+  guidelines: String
   icon: Upload
   orderingPriority: Int
   shortDescription: String!
@@ -536,6 +537,7 @@ input FinishUploadFileInput {
 type Forum implements Node & Subscribable {
   createdAt: DateTime!
   entitySubscription(entity: UsernameOrID): SubjectSubscription
+  guidelines: String
   icon: Url
   id: ID!
   orderingPriority: Int!
@@ -1081,6 +1083,7 @@ input UpdateEventInput {
 
 input UpdateForumInput {
   description: String
+  guidelines: String
   icon: Upload
   orderingPriority: Int
   shortDescription: String
