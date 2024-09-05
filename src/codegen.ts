@@ -1,7 +1,9 @@
 import type { CodegenConfig } from "@graphql-codegen/cli";
 
+const schema = process.env.GRAPHQL_ENDPOINT || "https://aqora.io/graphql";
+
 const config: CodegenConfig = {
-  schema: "https://aqora.io/graphql",
+  schema,
   documents: ["src/**/*.ts"],
   ignoreNoDocuments: true,
   emitLegacyCommonJSImports: false,
@@ -11,7 +13,7 @@ const config: CodegenConfig = {
         gqlTagName: "gql",
       },
       preset: "client",
-      plugins: ["typescript-apollo-client-helpers"],
+      plugins: [],
       config: {
         useTypeImports: true,
         flattenGeneratedTypes: true,

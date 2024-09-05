@@ -8,7 +8,6 @@ import { getAccessToken } from "./credentials";
 const endpoint = GlobalArgsImpl.getInstance().graphqlUrl().toString();
 
 function createApolloClient() {
-  console.log("HELLO");
   const headers = getAccessToken()
     .then((accessToken) => {
       if (accessToken) {

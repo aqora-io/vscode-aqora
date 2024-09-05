@@ -21,7 +21,6 @@ async function templateCompetition() {
   const {
     data: { competitions },
   } = await client.query<Get_CompetitionsQuery>({ query: GET_COMPETITIONS });
-  console.log("COMPET", competitions);
 
   if (!competitions?.edges) {
     return;
