@@ -1,7 +1,6 @@
 /* eslint-disable */
-import * as types from './graphql';
-
-
+import * as types from './graphql.js';
+import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 
 /**
  * Map of all GraphQL operations in the project.
@@ -15,14 +14,34 @@ import * as types from './graphql';
  */
 const documents = {
     "\n  query GET_COMPETITIONS {\n    competitions {\n      edges {\n        node {\n          id\n          slug\n          shortDescription\n        }\n      }\n    }\n  }\n": types.Get_CompetitionsDocument,
+    "\n  mutation REFRESH_TOKEN($clientId: String!, $refreshToken: String!) {\n    oauth2Refresh(input: { clientId: $clientId, refreshToken: $refreshToken }) {\n      clientError\n      unauthorized\n      issued {\n        expiresIn\n        accessToken\n        refreshToken\n      }\n    }\n  }\n": types.Refresh_TokenDocument,
 };
 
 /**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ *
+ *
+ * @example
+ * ```ts
+ * const query = gql(`query GetUser($id: ID!) { user(id: $id) { name } }`);
+ * ```
+ *
+ * The query argument is unknown!
+ * Please regenerate the types.
  */
-export function graphql(source: "\n  query GET_COMPETITIONS {\n    competitions {\n      edges {\n        node {\n          id\n          slug\n          shortDescription\n        }\n      }\n    }\n  }\n"): typeof import('./graphql').Get_CompetitionsDocument;
+export function gql(source: string): unknown;
 
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query GET_COMPETITIONS {\n    competitions {\n      edges {\n        node {\n          id\n          slug\n          shortDescription\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query GET_COMPETITIONS {\n    competitions {\n      edges {\n        node {\n          id\n          slug\n          shortDescription\n        }\n      }\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation REFRESH_TOKEN($clientId: String!, $refreshToken: String!) {\n    oauth2Refresh(input: { clientId: $clientId, refreshToken: $refreshToken }) {\n      clientError\n      unauthorized\n      issued {\n        expiresIn\n        accessToken\n        refreshToken\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation REFRESH_TOKEN($clientId: String!, $refreshToken: String!) {\n    oauth2Refresh(input: { clientId: $clientId, refreshToken: $refreshToken }) {\n      clientError\n      unauthorized\n      issued {\n        expiresIn\n        accessToken\n        refreshToken\n      }\n    }\n  }\n"];
 
-export function graphql(source: string) {
+export function gql(source: string) {
   return (documents as any)[source] ?? {};
 }
+
+export type DocumentType<TDocumentNode extends DocumentNode<any, any>> = TDocumentNode extends DocumentNode<  infer TType,  any>  ? TType  : never;

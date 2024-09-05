@@ -4,19 +4,47 @@ const config: CodegenConfig = {
   schema: "https://aqora.io/graphql",
   documents: ["src/**/*.ts"],
   ignoreNoDocuments: true,
+  emitLegacyCommonJSImports: false,
   generates: {
     "./src/graphql/": {
-      preset: "client",
-      config: {
-        documentMode: "string",
+      presetConfig: {
+        gqlTagName: "gql",
       },
-      plugins: [
-        "typescript",
-        "typescript-operations",
-        "typescript-apollo-client-helpers",
-      ],
+      preset: "client",
+      plugins: ["typescript-apollo-client-helpers"],
+      config: {
+        useTypeImports: true,
+        flattenGeneratedTypes: true,
+        enumsAsTypes: true,
+        futureProofEnums: true,
+        immutableTypes: true,
+        maybeValue: "T | null | undefined",
+        inputMaybeValue: "T | null | undefined",
+        disableDescriptions: true,
+        useImplementingTypes: true,
+        strictScalars: true,
+        emitLegacyCommonJSImports: true,
+        scalars: {
+          ID: {
+            input: "string",
+            output: "string | number",
+          },
+          DateTime: "Date",
+          JSON: "{ [key: string]: any }",
+          Semver: "`${number}.${number}.${number}`",
+          UsernameOrID: "string",
+          Upload: "{ filename: string, content_type?: string, content: File  }",
+          Url: "URL",
+        },
+        avoidOptionals: {
+          field: true,
+          inputValue: true,
+          object: true,
+          defaultValue: true,
+        },
+      },
     },
-    "./schema.graphql": {
+    "./schema.gql": {
       plugins: ["schema-ast"],
       config: {
         includeDirectives: true,

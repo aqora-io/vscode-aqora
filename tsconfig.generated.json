@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": ["node_modules", "./src/graphql/graphql.ts"],
+  "compilerOptions": {
+    "skipLibCheck": true
+  }
+}

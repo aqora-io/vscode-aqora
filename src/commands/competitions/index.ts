@@ -1,9 +1,9 @@
-import gql from "graphql-tag";
 import { Get_CompetitionsQuery } from "../../graphql/graphql";
+import { gql } from "../../graphql/gql";
 import { client } from "../../graphqlClient";
 import * as vscode from "vscode";
 
-const GET_COMPETITIONS = gql`
+const GET_COMPETITIONS = gql(`
   query GET_COMPETITIONS {
     competitions {
       edges {
@@ -15,28 +15,23 @@ const GET_COMPETITIONS = gql`
       }
     }
   }
-`;
-
-const transformCompetitionsToQuickPick = (
-  competitions: Get_CompetitionsQuery["competitions"]["edges"],
-) => {
-  return competitions.map((competition) => ({
-    label: competition.node.slug,
-    details: competition.node.shortDescription,
-    id: competition.node.id,
-  }));
-};
+`);
 
 async function templateCompetition() {
   const {
     data: { competitions },
   } = await client.query<Get_CompetitionsQuery>({ query: GET_COMPETITIONS });
+  console.log("COMPET", competitions);
 
   if (!competitions?.edges) {
     return;
   }
   const competition = await vscode.window.showQuickPick(
-    transformCompetitionsToQuickPick(competitions.edges),
+    competitions.edges.map((competition) => ({
+      label: competition.node.slug,
+      details: competition.node.shortDescription,
+      id: competition.node.id,
+    })),
     { matchOnDetail: true },
   );
 
