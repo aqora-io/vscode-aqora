@@ -1,6 +1,6 @@
 import { Get_CompetitionsQuery } from "../../graphql/graphql";
 import { gql } from "../../graphql/gql";
-import { client } from "../../graphqlClient";
+import { client as gqlClient } from "../../graphqlClient";
 import * as vscode from "vscode";
 
 const GET_COMPETITIONS = gql(`
@@ -17,7 +17,25 @@ const GET_COMPETITIONS = gql(`
   }
 `);
 
+async function askForFolderPath(): Promise<string | null> {
+  const options: vscode.OpenDialogOptions = {
+    canSelectMany: false, // Single folder selection
+    canSelectFiles: false, // No file selection
+    canSelectFolders: true, // Allow folder selection
+    openLabel: "Select Folder",
+  };
+
+  const folderUri = await vscode.window.showOpenDialog(options);
+
+  if (folderUri && folderUri[0]) {
+    return folderUri[0].fsPath;
+  } else {
+    return null;
+  }
+}
+
 async function templateCompetition() {
+  const client = await gqlClient;
   const {
     data: { competitions },
   } = await client.query<Get_CompetitionsQuery>({ query: GET_COMPETITIONS });
@@ -38,7 +56,18 @@ async function templateCompetition() {
     return null;
   }
 
-  vscode.window.showInformationMessage("aqora template " + competition.label);
+  const userTemplatePath = await askForFolderPath();
+  if (userTemplatePath) {
+    const CLITemplateCommmand = `aqora template ${competition.label} -p ${userTemplatePath}`;
+    const terminal = vscode.window.createTerminal(
+      "Download " + competition.label,
+    );
+    terminal.sendText(CLITemplateCommmand);
+    terminal.show();
+    vscode.window.showInformationMessage(
+      "Template downloaded in " + userTemplatePath,
+    );
+  }
 }
 
 export const templateCompetitionDisposable = vscode.commands.registerCommand(

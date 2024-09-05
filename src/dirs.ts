@@ -1,33 +1,57 @@
-import * as fs from "fs/promises";
 import * as os from "os";
 import * as path from "path";
+import { promises as fs } from "fs";
 
-const AQORA_DIRNAME = ".aqora";
 const CREDENTIALS_FILE = "credentials.json";
 
+class SystemError extends Error {
+  constructor(
+    public message: string,
+    public detail: string,
+  ) {
+    super(message);
+    this.name = "SystemError";
+  }
+}
+
 async function configDir(): Promise<string> {
-  let basePath: string | undefined;
+  function getPlatformConfigDir(): string | null {
+    const platform = os.platform();
 
-  if (process.env.XDG_CONFIG_HOME) {
-    basePath = process.env.XDG_CONFIG_HOME;
-  } else {
-    basePath = path.join(os.homedir(), ".config");
+    if (platform === "win32") {
+      return process.env.APPDATA || null;
+    } else if (platform === "darwin") {
+      return path.join(os.homedir(), "Library", "Application Support");
+    } else if (platform === "linux") {
+      return process.env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config");
+    }
+
+    return null;
   }
 
-  if (!basePath) {
-    throw new Error("Could not determine config directory");
-  }
+  const configDir = getPlatformConfigDir();
 
-  const configPath = path.join(basePath, AQORA_DIRNAME);
-
-  try {
-    await fs.mkdir(configPath, { recursive: true });
-    return configPath;
-  } catch (err) {
-    throw new Error(
-      `Failed to create config directory at ${configPath}: ${err}`,
+  if (!configDir) {
+    throw new SystemError(
+      "Could not find config directory",
+      "This is a bug, please report it",
     );
   }
+
+  // Append the "aqora" subdirectory to the config path
+  const aqoraConfigDir = path.join(configDir, "aqora");
+
+  try {
+    // Create the directory (and any parent directories) if they don't exist
+    await fs.mkdir(aqoraConfigDir, { recursive: true });
+  } catch (err) {
+    throw new SystemError(
+      `Failed to create config directory at ${aqoraConfigDir}: ${err}`,
+      "",
+    );
+  }
+
+  return aqoraConfigDir;
 }
 
 async function credentialsPath(): Promise<string> {
@@ -35,4 +59,3 @@ async function credentialsPath(): Promise<string> {
 }
 
 export { configDir, credentialsPath };
-

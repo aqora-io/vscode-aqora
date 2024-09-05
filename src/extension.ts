@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import registerCommands from "./commands";
 
 export function activate(context: vscode.ExtensionContext) {
+  console.info("==== Starting ====");
   registerCommands(context);
 }
 

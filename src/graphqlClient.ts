@@ -7,8 +7,8 @@ import { getAccessToken } from "./credentials";
 
 const endpoint = GlobalArgsImpl.getInstance().graphqlUrl().toString();
 
-function createApolloClient() {
-  const headers = getAccessToken()
+async function createApolloClient() {
+  const headers = await getAccessToken()
     .then((accessToken) => {
       if (accessToken) {
         return {
