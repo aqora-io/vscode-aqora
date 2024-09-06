@@ -1,8 +1,9 @@
-import * as os from "os";
 import * as path from "path";
 import { promises as fs } from "fs";
+import xdgAppPaths from "xdg-app-paths";
 
 const CREDENTIALS_FILE = "credentials.json";
+const PATH_SUFFIX = "aqora";
 
 class SystemError extends Error {
   constructor(
@@ -14,44 +15,37 @@ class SystemError extends Error {
   }
 }
 
-async function configDir(): Promise<string> {
-  function getPlatformConfigDir(): string | null {
-    const platform = os.platform();
-
-    if (platform === "win32") {
-      return process.env.APPDATA || null;
-    } else if (platform === "darwin") {
-      return path.join(os.homedir(), "Library", "Application Support");
-    } else if (platform === "linux") {
-      return process.env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config");
+async function defineConfigDir(): Promise<string> {
+  const paths = xdgAppPaths({ name: PATH_SUFFIX });
+  try {
+    await fs.access(paths.data(), fs.constants.R_OK);
+    return paths.data();
+  } catch (dataPathError) {
+    try {
+      await fs.access(paths.config(), fs.constants.R_OK);
+      return paths.config();
+    } catch (configPathError) {
+      throw new SystemError(
+        "Could not find config directory",
+        "This is a bug, please report it",
+      );
     }
-
-    return null;
   }
+}
 
-  const configDir = getPlatformConfigDir();
-
-  if (!configDir) {
-    throw new SystemError(
-      "Could not find config directory",
-      "This is a bug, please report it",
-    );
-  }
-
-  // Append the "aqora" subdirectory to the config path
-  const aqoraConfigDir = path.join(configDir, "aqora");
-
+async function configDir(): Promise<string> {
+  const configDir = await defineConfigDir();
   try {
     // Create the directory (and any parent directories) if they don't exist
-    await fs.mkdir(aqoraConfigDir, { recursive: true });
+    await fs.mkdir(configDir, { recursive: true });
   } catch (err) {
     throw new SystemError(
-      `Failed to create config directory at ${aqoraConfigDir}: ${err}`,
+      `Failed to create config directory at ${configDir}: ${err}`,
       "",
     );
   }
 
-  return aqoraConfigDir;
+  return configDir;
 }
 
 async function credentialsPath(): Promise<string> {
