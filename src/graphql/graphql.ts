@@ -22,7 +22,7 @@ export type Scalars = {
   DateTime: { input: Date; output: Date; }
   /** A scalar that can represent any JSON value. */
   JSON: { input: { [key: string]: any }; output: { [key: string]: any }; }
-  Semver: { input: `${number}.${number}.${number}`; output: `${number}.${number}.${number}`; }
+  Semver: { input: `${number}.${number}.${number}` | `${number}.${number}.${number}-${string}` | `${number}.${number}.${number}+${string}` | `${number}.${number}.${number}-${string}+${string}`; output: `${number}.${number}.${number}` | `${number}.${number}.${number}-${string}` | `${number}.${number}.${number}+${string}` | `${number}.${number}.${number}-${string}+${string}`; }
   Upload: { input: { filename: string, content_type?: string, content: File  }; output: { filename: string, content_type?: string, content: File  }; }
   /** URL is a String implementing the [URL Standard](http://url.spec.whatwg.org/) */
   Url: { input: URL; output: URL; }

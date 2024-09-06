@@ -33,7 +33,8 @@ const config: CodegenConfig = {
           },
           DateTime: "Date",
           JSON: "{ [key: string]: any }",
-          Semver: "`${number}.${number}.${number}`",
+          Semver:
+            "`${number}.${number}.${number}` | `${number}.${number}.${number}-${string}` | `${number}.${number}.${number}+${string}` | `${number}.${number}.${number}-${string}+${string}`",
           UsernameOrID: "string",
           Upload: "{ filename: string, content_type?: string, content: File  }",
           Url: "URL",
