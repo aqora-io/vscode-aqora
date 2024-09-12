@@ -9,8 +9,14 @@
     "vscode": "^1.90.0"
   },
   "categories": [
+    "Snippets",
+    "Notebooks",
     "Other"
   ],
+  "icon": "images/icon_white.png",
+  "bugs": {
+    "url": "https://github.com/aqora-io/vscode-aqora/issues"
+  },
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
@@ -22,6 +28,10 @@
       {
         "command": "aqora.login",
         "title": "Login into aqora platform by using CLI."
+      },
+      {
+        "command": "aqora.test",
+        "title": "Test your submission"
       }
     ]
   },
