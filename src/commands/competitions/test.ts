@@ -1,10 +1,19 @@
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { askForSingleFolderPath } from "../utils";
 import * as vscode from "vscode";
+import { GlobalArgsImpl } from "../../globalArgs";
 
 type Progress = vscode.Progress<{ message?: string; increment?: number }>;
 
 async function testSubmission() {
+  const isAqoraProject = await GlobalArgsImpl.getInstance().isAqoraProject();
+  const currentPath = GlobalArgsImpl.getInstance().currentPath();
+
+  if (isAqoraProject && currentPath) {
+    progressCommand(currentPath);
+    return;
+  }
+
   const competitionPath = await askForSingleFolderPath();
 
   if (!competitionPath) {
@@ -12,6 +21,10 @@ async function testSubmission() {
     return;
   }
 
+  progressCommand(competitionPath);
+}
+
+const progressCommand = (competitionPath: string): void => {
   vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
@@ -22,7 +35,7 @@ async function testSubmission() {
       return executeTestCommand(competitionPath, progress, token);
     },
   );
-}
+};
 
 function executeTestCommand(
   competitionPath: string,
