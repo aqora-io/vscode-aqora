@@ -2,15 +2,15 @@ import { Get_CompetitionsQuery } from "../../graphql/graphql";
 import { gql } from "../../graphql/gql";
 import { client as gqlClient } from "../../graphqlClient";
 import * as vscode from "vscode";
-import { askForSingleFolderPath } from "../utils";
+import { askForSingleFolderPath, isAqoraInstalled } from "../utils";
 
 const GET_COMPETITIONS = gql(`
   query GET_COMPETITIONS {
     competitions {
       edges {
-        node {
-          id
+        node { 
           slug
+          title
           shortDescription
         }
       }
@@ -29,9 +29,9 @@ async function templateCompetition() {
   }
   const competition = await vscode.window.showQuickPick(
     competitions.edges.map((competition) => ({
-      label: competition.node.slug,
+      label: competition.node.title,
       details: competition.node.shortDescription,
-      id: competition.node.id,
+      id: competition.node.slug,
     })),
     { matchOnDetail: true },
   );
@@ -40,17 +40,19 @@ async function templateCompetition() {
     return null;
   }
 
-  const userTemplatePath = await askForSingleFolderPath();
-  if (userTemplatePath) {
-    const CLITemplateCommmand = `aqora template ${competition.label} ${userTemplatePath}/${competition.label}`;
-    const terminal = vscode.window.createTerminal(
-      "Download " + competition.label,
-    );
-    terminal.sendText(CLITemplateCommmand);
-    terminal.show();
-    vscode.window.showInformationMessage(
-      "Template downloaded in " + userTemplatePath,
-    );
+  if (await isAqoraInstalled()) {
+    const userTemplatePath = await askForSingleFolderPath();
+    if (userTemplatePath) {
+      const CLITemplateCommmand = `aqora template ${competition.id} ${userTemplatePath}/${competition.label}`;
+      const terminal = vscode.window.createTerminal(
+        "Download " + competition.label,
+      );
+      terminal.sendText(CLITemplateCommmand);
+      terminal.show();
+      vscode.window.showInformationMessage(
+        "Template downloaded in " + userTemplatePath,
+      );
+    }
   }
 }
 

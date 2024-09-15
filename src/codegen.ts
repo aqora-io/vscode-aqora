@@ -38,6 +38,7 @@ const config: CodegenConfig = {
           UsernameOrID: "string",
           Upload: "{ filename: string, content_type?: string, content: File  }",
           Url: "URL",
+          UUID: "string",
         },
         avoidOptionals: {
           field: true,

@@ -23,6 +23,17 @@ export type Scalars = {
   /** A scalar that can represent any JSON value. */
   JSON: { input: { [key: string]: any }; output: { [key: string]: any }; }
   Semver: { input: `${number}.${number}.${number}` | `${number}.${number}.${number}-${string}` | `${number}.${number}.${number}+${string}` | `${number}.${number}.${number}-${string}+${string}`; output: `${number}.${number}.${number}` | `${number}.${number}.${number}-${string}` | `${number}.${number}.${number}+${string}` | `${number}.${number}.${number}-${string}+${string}`; }
+  /**
+   * A UUID is a unique 128-bit number, stored as 16 octets. UUIDs are parsed as
+   * Strings within GraphQL. UUIDs are used to assign unique identifiers to
+   * entities without requiring a central allocating authority.
+   *
+   * # References
+   *
+   * * [Wikipedia: Universally Unique Identifier](http://en.wikipedia.org/wiki/Universally_unique_identifier)
+   * * [RFC4122: A Universally Unique IDentifier (UUID) URN Namespace](http://tools.ietf.org/html/rfc4122)
+   */
+  UUID: { input: string; output: string; }
   Upload: { input: { filename: string, content_type?: string, content: File  }; output: { filename: string, content_type?: string, content: File  }; }
   /** URL is a String implementing the [URL Standard](http://url.spec.whatwg.org/) */
   Url: { input: URL; output: URL; }
@@ -40,6 +51,7 @@ export type Action =
   | 'CREATE_EVENT'
   | 'CREATE_FORUM'
   | 'CREATE_ORGANIZATION'
+  | 'CREATE_PROJECT_VERSION_APPROVAL'
   | 'CREATE_SUBJECT_SUBSCRIPTION'
   | 'CREATE_SUBMISSION_VERSION'
   | 'CREATE_TAG'
@@ -50,6 +62,7 @@ export type Action =
   | 'DELETE_EVENT'
   | 'DELETE_FORUM'
   | 'DELETE_ORGANIZATION'
+  | 'DELETE_PROJECT_VERSION_APPROVAL'
   | 'DELETE_SUBJECT_SUBSCRIPTION'
   | 'DELETE_TAG'
   | 'DELETE_TOPIC'
@@ -64,6 +77,7 @@ export type Action =
   | 'READ_EVENT_COMPETITION'
   | 'READ_EVENT_MEMBERSHIP'
   | 'READ_PROJECT_VERSION'
+  | 'READ_PROJECT_VERSION_APPROVAL'
   | 'READ_PROJECT_VERSION_EVALUATION'
   | 'READ_PROJECT_VERSION_FILE'
   | 'READ_SUBJECT_SUBSCRIPTION'
@@ -168,6 +182,7 @@ export type Competition = Node & Subscribable & {
   latestRule: CompetitionRule;
   leaderboard: ProjectVersionEvaluationConnection;
   members: CompetitionMembershipConnection;
+  requiresApproval: Scalars['Boolean']['output'];
   rules: CompetitionRuleConnection;
   shortDescription: Scalars['String']['output'];
   slug: Scalars['String']['output'];
@@ -231,6 +246,7 @@ export type CompetitionSubmissionsArgs = {
   entityId: InputMaybe<Scalars['ID']['input']>;
   first: InputMaybe<Scalars['Int']['input']>;
   last: InputMaybe<Scalars['Int']['input']>;
+  needsApproval: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 
@@ -399,6 +415,7 @@ export type CreateCompetitionInput = {
   banner: InputMaybe<Scalars['Upload']['input']>;
   description: InputMaybe<Scalars['String']['input']>;
   isPrivate: Scalars['Boolean']['input'];
+  requiresApproval: InputMaybe<Scalars['Boolean']['input']>;
   shortDescription: Scalars['String']['input'];
   slug: Scalars['String']['input'];
   tagIds: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
@@ -475,6 +492,7 @@ export type Entity = {
   kind: EntityKind;
   linkedin: Maybe<Scalars['String']['output']>;
   location: Maybe<Scalars['String']['output']>;
+  projectVersionApprovals: ProjectVersionApprovalConnection;
   subjectSubscriptions: SubjectSubscriptionConnection;
   submissions: SubmissionConnection;
   username: Scalars['String']['output'];
@@ -488,6 +506,15 @@ export type EntityBadgesArgs = {
   before: InputMaybe<Scalars['String']['input']>;
   first: InputMaybe<Scalars['Int']['input']>;
   last: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type EntityProjectVersionApprovalsArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
+  projectVersionId: InputMaybe<Scalars['UUID']['input']>;
 };
 
 
@@ -878,6 +905,7 @@ export type Mutation = {
   createForum: ForumEdge;
   createOrganization: OrganizationEdge;
   createPasswordReset: Scalars['Boolean']['output'];
+  createProjectVersionApproval: ProjectVersionApprovalEdge;
   createProjectVersionFileMultipartUpload: CreateMultipartUploadResponse;
   createSubmissionVersion: ProjectVersionEdge;
   createTag: TagEdge;
@@ -889,6 +917,7 @@ export type Mutation = {
   deleteEvent: Scalars['ID']['output'];
   deleteForum: Scalars['ID']['output'];
   deleteOrganization: Scalars['ID']['output'];
+  deleteProjectVersionApproval: Scalars['ID']['output'];
   deleteTag: Scalars['ID']['output'];
   deleteTopic: Scalars['ID']['output'];
   deleteUser: Scalars['ID']['output'];
@@ -1005,6 +1034,11 @@ export type MutationCreatePasswordResetArgs = {
 };
 
 
+export type MutationCreateProjectVersionApprovalArgs = {
+  projectVersionId: Scalars['ID']['input'];
+};
+
+
 export type MutationCreateProjectVersionFileMultipartUploadArgs = {
   chunks: Array<Scalars['Int']['input']>;
   contentType: InputMaybe<Scalars['String']['input']>;
@@ -1065,6 +1099,11 @@ export type MutationDeleteForumArgs = {
 
 export type MutationDeleteOrganizationArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteProjectVersionApprovalArgs = {
+  projectVersionApprovalId: Scalars['ID']['input'];
 };
 
 
@@ -1275,6 +1314,7 @@ export type Node = {
 
 export type NotificationKind =
   | 'AWARD_BADGE'
+  | 'CONTENT_MENTIONED'
   | 'CREATE_SUBMISSION'
   | 'CREATE_TOPIC'
   | 'REPLY_TOPIC'
@@ -1332,6 +1372,7 @@ export type Organization = Entity & Node & {
   kind: EntityKind;
   linkedin: Maybe<Scalars['String']['output']>;
   location: Maybe<Scalars['String']['output']>;
+  projectVersionApprovals: ProjectVersionApprovalConnection;
   subjectSubscriptions: SubjectSubscriptionConnection;
   submissions: SubmissionConnection;
   userMembership: Maybe<OrganizationMembership>;
@@ -1347,6 +1388,15 @@ export type OrganizationBadgesArgs = {
   before: InputMaybe<Scalars['String']['input']>;
   first: InputMaybe<Scalars['Int']['input']>;
   last: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type OrganizationProjectVersionApprovalsArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
+  projectVersionId: InputMaybe<Scalars['UUID']['input']>;
 };
 
 
@@ -1486,6 +1536,8 @@ export type ProjectViewerCanArgs = {
 
 export type ProjectVersion = Node & {
   __typename?: 'ProjectVersion';
+  approval: Maybe<ProjectVersionApproval>;
+  approvals: ProjectVersionApprovalConnection;
   createdAt: Scalars['DateTime']['output'];
   entity: Entity;
   evaluation: Maybe<ProjectVersionEvaluation>;
@@ -1497,9 +1549,23 @@ export type ProjectVersion = Node & {
   pyprojectToml: Scalars['String']['output'];
   pythonRequires: Maybe<Scalars['String']['output']>;
   readme: Maybe<Scalars['String']['output']>;
+  status: ProjectVersionStatus;
   validatedAt: Maybe<Scalars['DateTime']['output']>;
   version: Scalars['Semver']['output'];
   viewerCan: Scalars['Boolean']['output'];
+};
+
+
+export type ProjectVersionApprovalArgs = {
+  entity: InputMaybe<Scalars['UsernameOrID']['input']>;
+};
+
+
+export type ProjectVersionApprovalsArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1511,6 +1577,40 @@ export type ProjectVersionFileByKindArgs = {
 export type ProjectVersionViewerCanArgs = {
   action: Action;
   asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+};
+
+export type ProjectVersionApproval = Node & {
+  __typename?: 'ProjectVersionApproval';
+  createdAt: Scalars['DateTime']['output'];
+  entity: Entity;
+  id: Scalars['ID']['output'];
+  projectVersion: ProjectVersion;
+  viewerCan: Scalars['Boolean']['output'];
+};
+
+
+export type ProjectVersionApprovalViewerCanArgs = {
+  action: Action;
+  asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+};
+
+export type ProjectVersionApprovalConnection = {
+  __typename?: 'ProjectVersionApprovalConnection';
+  /** A list of edges. */
+  edges: Array<ProjectVersionApprovalEdge>;
+  /** A list of nodes. */
+  nodes: Array<ProjectVersionApproval>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+};
+
+/** An edge in a connection. */
+export type ProjectVersionApprovalEdge = {
+  __typename?: 'ProjectVersionApprovalEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: ProjectVersionApproval;
 };
 
 export type ProjectVersionConnection = {
@@ -1598,6 +1698,14 @@ export type ProjectVersionFileKind =
   | 'PACKAGE'
   | 'SUBMISSION_EVALUATION'
   | 'TEMPLATE'
+  | '%future added value';
+
+export type ProjectVersionStatus =
+  | 'AWAITING_APPROVAL'
+  | 'AWAITING_EVALUATION'
+  | 'AWAITING_VALIDATION'
+  | 'ERROR'
+  | 'OK'
   | '%future added value';
 
 export type Query = {
@@ -1750,6 +1858,7 @@ export type Submission = Node & Project & {
   entity: Entity;
   id: Scalars['ID']['output'];
   latest: Maybe<ProjectVersion>;
+  maxEvaluation: Maybe<ProjectVersionEvaluation>;
   name: Scalars['String']['output'];
   version: Maybe<ProjectVersion>;
   versions: ProjectVersionConnection;
@@ -1815,6 +1924,7 @@ export type Subscription = {
   __typename?: 'Subscription';
   deletedComments: DeletedComment;
   newComments: CommentEdge;
+  projectVersionStatusUpdate: ProjectVersion;
   updatedComments: CommentEdge;
 };
 
@@ -1826,6 +1936,14 @@ export type SubscriptionDeletedCommentsArgs = {
 
 export type SubscriptionNewCommentsArgs = {
   topicId: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type SubscriptionProjectVersionStatusUpdateArgs = {
+  competitionId: InputMaybe<Scalars['ID']['input']>;
+  entityId: InputMaybe<Scalars['ID']['input']>;
+  projectId: InputMaybe<Scalars['ID']['input']>;
+  projectVersionId: InputMaybe<Scalars['ID']['input']>;
 };
 
 
@@ -1951,6 +2069,7 @@ export type UpdateCompetitionInput = {
   banner: InputMaybe<Scalars['Upload']['input']>;
   description: InputMaybe<Scalars['String']['input']>;
   isPrivate: InputMaybe<Scalars['Boolean']['input']>;
+  requiresApproval: InputMaybe<Scalars['Boolean']['input']>;
   rules: InputMaybe<Scalars['String']['input']>;
   shortDescription: InputMaybe<Scalars['String']['input']>;
   slug: InputMaybe<Scalars['String']['input']>;
@@ -2073,6 +2192,7 @@ export type User = Entity & Node & {
   notifications: UserNotifications;
   organization: Maybe<Scalars['String']['output']>;
   organizations: OrganizationMembershipConnection;
+  projectVersionApprovals: ProjectVersionApprovalConnection;
   subjectSubscriptions: SubjectSubscriptionConnection;
   submissions: SubmissionConnection;
   topics: TopicConnection;
@@ -2121,6 +2241,15 @@ export type UserOrganizationsArgs = {
   before: InputMaybe<Scalars['String']['input']>;
   first: InputMaybe<Scalars['Int']['input']>;
   last: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type UserProjectVersionApprovalsArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
+  projectVersionId: InputMaybe<Scalars['UUID']['input']>;
 };
 
 
@@ -2213,7 +2342,30 @@ export type VoteKind =
 export type Get_CompetitionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type Get_CompetitionsQuery = { __typename?: 'Query', competitions: { __typename?: 'CompetitionConnection', edges: Array<{ __typename?: 'CompetitionEdge', node: { __typename?: 'Competition', id: string | number, slug: string, shortDescription: string } }> } };
+export type Get_CompetitionsQuery = { __typename?: 'Query', competitions: { __typename?: 'CompetitionConnection', edges: Array<{ __typename?: 'CompetitionEdge', node: { __typename?: 'Competition', slug: string, title: string, shortDescription: string } }> } };
+
+export type Login_Page_User_MutationMutationVariables = Exact<{
+  input: LoginUserInput;
+}>;
+
+
+export type Login_Page_User_MutationMutation = { __typename?: 'Mutation', loginUser: { __typename?: 'UserEdge', node: { __typename?: 'User', id: string | number } } };
+
+export type Oauth2_Authorize_Page_MutationMutationVariables = Exact<{
+  input: Oauth2AuthorizeInput;
+}>;
+
+
+export type Oauth2_Authorize_Page_MutationMutation = { __typename?: 'Mutation', oauth2Authorize: { __typename?: 'Oauth2AuthorizeOutput', unauthorized: boolean, clientError: boolean, redirectUri: URL | null } };
+
+export type Oauth2_Token_MutationMutationVariables = Exact<{
+  code: Scalars['String']['input'];
+  clientId: Scalars['String']['input'];
+  redirectUri: Scalars['Url']['input'];
+}>;
+
+
+export type Oauth2_Token_MutationMutation = { __typename?: 'Mutation', oauth2Token: { __typename?: 'Oauth2TokenOutput', clientError: boolean, unauthorized: boolean, issued: { __typename?: 'Oauth2Token', expiresIn: number, accessToken: string, refreshToken: string } | null } };
 
 export type Refresh_TokenMutationVariables = Exact<{
   clientId: Scalars['String']['input'];
@@ -2224,5 +2376,8 @@ export type Refresh_TokenMutationVariables = Exact<{
 export type Refresh_TokenMutation = { __typename?: 'Mutation', oauth2Refresh: { __typename?: 'Oauth2TokenOutput', clientError: boolean, unauthorized: boolean, issued: { __typename?: 'Oauth2Token', expiresIn: number, accessToken: string, refreshToken: string } | null } };
 
 
-export const Get_CompetitionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GET_COMPETITIONS"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"competitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"edges"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"node"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"shortDescription"}}]}}]}}]}}]}}]} as unknown as DocumentNode<Get_CompetitionsQuery, Get_CompetitionsQueryVariables>;
+export const Get_CompetitionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GET_COMPETITIONS"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"competitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"edges"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"node"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"shortDescription"}}]}}]}}]}}]}}]} as unknown as DocumentNode<Get_CompetitionsQuery, Get_CompetitionsQueryVariables>;
+export const Login_Page_User_MutationDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"LOGIN_PAGE_USER_MUTATION"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"LoginUserInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"loginUser"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"node"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]} as unknown as DocumentNode<Login_Page_User_MutationMutation, Login_Page_User_MutationMutationVariables>;
+export const Oauth2_Authorize_Page_MutationDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"OAUTH2_AUTHORIZE_PAGE_MUTATION"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Oauth2AuthorizeInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"oauth2Authorize"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"unauthorized"}},{"kind":"Field","name":{"kind":"Name","value":"clientError"}},{"kind":"Field","name":{"kind":"Name","value":"redirectUri"}}]}}]}}]} as unknown as DocumentNode<Oauth2_Authorize_Page_MutationMutation, Oauth2_Authorize_Page_MutationMutationVariables>;
+export const Oauth2_Token_MutationDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"OAUTH2_TOKEN_MUTATION"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"code"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"clientId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"redirectUri"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Url"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"oauth2Token"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"code"},"value":{"kind":"Variable","name":{"kind":"Name","value":"code"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"clientId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"clientId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"redirectUri"},"value":{"kind":"Variable","name":{"kind":"Name","value":"redirectUri"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"clientError"}},{"kind":"Field","name":{"kind":"Name","value":"unauthorized"}},{"kind":"Field","name":{"kind":"Name","value":"issued"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"expiresIn"}},{"kind":"Field","name":{"kind":"Name","value":"accessToken"}},{"kind":"Field","name":{"kind":"Name","value":"refreshToken"}}]}}]}}]}}]} as unknown as DocumentNode<Oauth2_Token_MutationMutation, Oauth2_Token_MutationMutationVariables>;
 export const Refresh_TokenDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"REFRESH_TOKEN"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"clientId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"refreshToken"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"oauth2Refresh"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"clientId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"clientId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"refreshToken"},"value":{"kind":"Variable","name":{"kind":"Name","value":"refreshToken"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"clientError"}},{"kind":"Field","name":{"kind":"Name","value":"unauthorized"}},{"kind":"Field","name":{"kind":"Name","value":"issued"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"expiresIn"}},{"kind":"Field","name":{"kind":"Name","value":"accessToken"}},{"kind":"Field","name":{"kind":"Name","value":"refreshToken"}}]}}]}}]}}]} as unknown as DocumentNode<Refresh_TokenMutation, Refresh_TokenMutationVariables>;
