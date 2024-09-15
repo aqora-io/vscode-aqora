@@ -13,7 +13,7 @@ async function createApolloClient() {
       if (accessToken) {
         return {
           Authorization: `Bearer ${accessToken}`,
-          "User-Agent": "aqora",
+          "User-Agent": "aqora-vscode",
         };
       } else {
         return {};

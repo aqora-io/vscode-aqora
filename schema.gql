@@ -17,6 +17,7 @@ enum Action {
   CREATE_EVENT
   CREATE_FORUM
   CREATE_ORGANIZATION
+  CREATE_PROJECT_VERSION_APPROVAL
   CREATE_SUBJECT_SUBSCRIPTION
   CREATE_SUBMISSION_VERSION
   CREATE_TAG
@@ -27,6 +28,7 @@ enum Action {
   DELETE_EVENT
   DELETE_FORUM
   DELETE_ORGANIZATION
+  DELETE_PROJECT_VERSION_APPROVAL
   DELETE_SUBJECT_SUBSCRIPTION
   DELETE_TAG
   DELETE_TOPIC
@@ -41,6 +43,7 @@ enum Action {
   READ_EVENT_COMPETITION
   READ_EVENT_MEMBERSHIP
   READ_PROJECT_VERSION
+  READ_PROJECT_VERSION_APPROVAL
   READ_PROJECT_VERSION_EVALUATION
   READ_PROJECT_VERSION_FILE
   READ_SUBJECT_SUBSCRIPTION
@@ -126,11 +129,12 @@ type Competition implements Node & Subscribable {
   latestRule: CompetitionRule!
   leaderboard(after: String, before: String, first: Int, last: Int): ProjectVersionEvaluationConnection!
   members(after: String, before: String, first: Int, last: Int): CompetitionMembershipConnection!
+  requiresApproval: Boolean!
   rules(after: String, before: String, first: Int, last: Int): CompetitionRuleConnection!
   shortDescription: String!
   slug: String!
   submission(entity: UsernameOrID): Submission
-  submissions(after: String, before: String, entityId: ID, first: Int, last: Int): SubmissionConnection!
+  submissions(after: String, before: String, entityId: ID, first: Int, last: Int, needsApproval: Boolean): SubmissionConnection!
   tags(after: String, before: String, first: Int, last: Int): TagConnection!
   thumbnail: Url
   title: String!
@@ -253,6 +257,7 @@ input CreateCompetitionInput {
   banner: Upload
   description: String
   isPrivate: Boolean!
+  requiresApproval: Boolean
   shortDescription: String!
   slug: String!
   tagIds: [ID]
@@ -334,6 +339,7 @@ interface Entity {
   kind: EntityKind!
   linkedin: String
   location: String
+  projectVersionApprovals(after: String, before: String, first: Int, last: Int, projectVersionId: UUID): ProjectVersionApprovalConnection!
   subjectSubscriptions(after: String, before: String, first: Int, kinds: [SubjectKind!], last: Int): SubjectSubscriptionConnection!
   submissions(after: String, before: String, competitionId: ID, first: Int, last: Int): SubmissionConnection!
   username: String!
@@ -608,6 +614,7 @@ type Mutation {
   createForum(input: CreateForumInput!): ForumEdge!
   createOrganization(input: CreateOrganizationInput!): OrganizationEdge!
   createPasswordReset(input: CreatePasswordResetInput!): Boolean!
+  createProjectVersionApproval(projectVersionId: ID!): ProjectVersionApprovalEdge!
   createProjectVersionFileMultipartUpload(chunks: [Int!]!, contentType: String, id: ID!): CreateMultipartUploadResponse!
   createSubmissionVersion(asEntity: UsernameOrID, competitionId: ID!, input: UpdateSubmissionInput!): ProjectVersionEdge!
   createTag(entityId: ID!, input: CreateTagInput!): TagEdge!
@@ -619,6 +626,7 @@ type Mutation {
   deleteEvent(id: ID!): ID!
   deleteForum(id: ID!): ID!
   deleteOrganization(id: ID!): ID!
+  deleteProjectVersionApproval(projectVersionApprovalId: ID!): ID!
   deleteTag(tagId: ID!): ID!
   deleteTopic(id: ID!): ID!
   deleteUser(id: ID!): ID!
@@ -666,6 +674,7 @@ interface Node {
 
 enum NotificationKind {
   AWARD_BADGE
+  CONTENT_MENTIONED
   CREATE_SUBMISSION
   CREATE_TOPIC
   REPLY_TOPIC
@@ -719,6 +728,7 @@ type Organization implements Entity & Node {
   kind: EntityKind!
   linkedin: String
   location: String
+  projectVersionApprovals(after: String, before: String, first: Int, last: Int, projectVersionId: UUID): ProjectVersionApprovalConnection!
   subjectSubscriptions(after: String, before: String, first: Int, kinds: [SubjectKind!], last: Int): SubjectSubscriptionConnection!
   submissions(after: String, before: String, competitionId: ID, first: Int, last: Int): SubmissionConnection!
   userMembership(user: UsernameOrID): OrganizationMembership
@@ -797,6 +807,8 @@ interface Project {
 }
 
 type ProjectVersion implements Node {
+  approval(entity: UsernameOrID): ProjectVersionApproval
+  approvals(after: String, before: String, first: Int, last: Int): ProjectVersionApprovalConnection!
   createdAt: DateTime!
   entity: Entity!
   evaluation: ProjectVersionEvaluation
@@ -808,9 +820,35 @@ type ProjectVersion implements Node {
   pyprojectToml: String!
   pythonRequires: String
   readme: String
+  status: ProjectVersionStatus!
   validatedAt: DateTime
   version: Semver!
   viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+type ProjectVersionApproval implements Node {
+  createdAt: DateTime!
+  entity: Entity!
+  id: ID!
+  projectVersion: ProjectVersion!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+type ProjectVersionApprovalConnection {
+  """A list of edges."""
+  edges: [ProjectVersionApprovalEdge!]!
+  """A list of nodes."""
+  nodes: [ProjectVersionApproval!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type ProjectVersionApprovalEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: ProjectVersionApproval!
 }
 
 type ProjectVersionConnection {
@@ -875,6 +913,14 @@ enum ProjectVersionFileKind {
   PACKAGE
   SUBMISSION_EVALUATION
   TEMPLATE
+}
+
+enum ProjectVersionStatus {
+  AWAITING_APPROVAL
+  AWAITING_EVALUATION
+  AWAITING_VALIDATION
+  ERROR
+  OK
 }
 
 type Query {
@@ -949,6 +995,7 @@ type Submission implements Node & Project {
   entity: Entity!
   id: ID!
   latest: ProjectVersion
+  maxEvaluation: ProjectVersionEvaluation
   name: String!
   version(version: Semver): ProjectVersion
   versions(after: String, before: String, first: Int, last: Int): ProjectVersionConnection!
@@ -981,6 +1028,7 @@ interface Subscribable {
 type Subscription {
   deletedComments(topicId: ID): DeletedComment!
   newComments(topicId: ID): CommentEdge!
+  projectVersionStatusUpdate(competitionId: ID, entityId: ID, projectId: ID, projectVersionId: ID): ProjectVersion!
   updatedComments(topicId: ID): CommentEdge!
 }
 
@@ -1051,6 +1099,18 @@ type TopicSubscription implements Node & SubjectSubscription {
   viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
 }
 
+"""
+A UUID is a unique 128-bit number, stored as 16 octets. UUIDs are parsed as
+Strings within GraphQL. UUIDs are used to assign unique identifiers to
+entities without requiring a central allocating authority.
+
+# References
+
+* [Wikipedia: Universally Unique Identifier](http://en.wikipedia.org/wiki/Universally_unique_identifier)
+* [RFC4122: A Universally Unique IDentifier (UUID) URN Namespace](http://tools.ietf.org/html/rfc4122)
+"""
+scalar UUID
+
 input UpdateAgendaInput {
   agenda: JSON
 }
@@ -1063,6 +1123,7 @@ input UpdateCompetitionInput {
   banner: Upload
   description: String
   isPrivate: Boolean
+  requiresApproval: Boolean
   rules: String
   shortDescription: String
   slug: String
@@ -1169,6 +1230,7 @@ type User implements Entity & Node {
   notifications: UserNotifications!
   organization: String
   organizations(after: String, before: String, first: Int, last: Int): OrganizationMembershipConnection!
+  projectVersionApprovals(after: String, before: String, first: Int, last: Int, projectVersionId: UUID): ProjectVersionApprovalConnection!
   subjectSubscriptions(after: String, before: String, first: Int, kinds: [SubjectKind!], last: Int): SubjectSubscriptionConnection!
   submissions(after: String, before: String, competitionId: ID, first: Int, last: Int): SubmissionConnection!
   topics(after: String, before: String, first: Int, last: Int, order: VotableOrder): TopicConnection!

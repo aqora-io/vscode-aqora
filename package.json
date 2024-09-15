@@ -23,15 +23,15 @@
     "commands": [
       {
         "command": "aqora.templateCompetition",
-        "title": "Clone a template from aqora.io."
+        "title": "Aqora: Clone a template from aqora.io."
       },
       {
         "command": "aqora.login",
-        "title": "Login into aqora platform by using CLI."
+        "title": "Aqora: Login into aqora platform by using CLI."
       },
       {
         "command": "aqora.test",
-        "title": "Test your submission"
+        "title": "Aqora: Test your submission"
       }
     ]
   },

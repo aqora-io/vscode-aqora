@@ -15,7 +15,7 @@ import { CamelToSnakeCaseNested } from "./utils";
 
 const EXPIRATION_PADDING_SEC = 60;
 
-interface Credentials {
+export interface Credentials {
   clientId: string;
   accessToken: string;
   refreshToken: string;
@@ -36,7 +36,7 @@ class CredentialsClass implements Credentials {
   }
 }
 
-interface CredentialsFile {
+export interface CredentialsFile {
   credentials: Record<string, CamelToSnakeCaseNested<Credentials>>;
 }
 
@@ -61,7 +61,7 @@ async function replaceFile(filePath: string, contents: Buffer): Promise<void> {
   await fs.writeFile(filePath, contents);
 }
 
-async function withLockedCredentials<T>(
+export async function withLockedCredentials<T>(
   f: (file: CredentialsFile) => Promise<T>,
 ): Promise<T> {
   const path = await credentialsPath();
