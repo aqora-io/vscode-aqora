@@ -43,7 +43,7 @@ async function templateCompetition() {
   if (await isAqoraInstalled()) {
     const userTemplatePath = await askForSingleFolderPath();
     if (userTemplatePath) {
-      const CLITemplateCommmand = `aqora template ${competition.id} ${userTemplatePath}/${competition.label}`;
+      const CLITemplateCommmand = `aqora template ${competition.id} ${userTemplatePath}/${competition.id}`;
       const terminal = vscode.window.createTerminal(
         "Download " + competition.label,
       );
