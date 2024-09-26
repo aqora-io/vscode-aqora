@@ -1,49 +1,39 @@
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
-import { askForSingleFolderPath } from "../utils";
 import * as vscode from "vscode";
-import { GlobalArgsImpl } from "../../globalArgs";
+import { AqoraProjectType } from "../globalArgs";
 
 type Progress = vscode.Progress<{ message?: string; increment?: number }>;
+type ContextKind = "Test" | "Upload";
 
-async function testSubmission() {
-  const isAqoraProject = await GlobalArgsImpl.getInstance().isAqoraProject();
-  const currentPath = GlobalArgsImpl.getInstance().currentPath();
-
-  if (isAqoraProject && currentPath) {
-    progressCommand(currentPath);
-    return;
-  }
-
-  const competitionPath = await askForSingleFolderPath();
-
-  if (!competitionPath) {
-    vscode.window.showErrorMessage("Please specify a competition folder.");
-    return;
-  }
-
-  progressCommand(competitionPath);
+export interface ProgressCliCommandContext {
+  path: string;
+  projectKind: AqoraProjectType;
+  kind: ContextKind;
+  commandArgs: readonly string[];
 }
 
-const progressCommand = (competitionPath: string): void => {
+export const progressCommand = (
+  context: Readonly<ProgressCliCommandContext>,
+): void => {
   vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: "Running Test Submission",
+      title: `Running ${context.kind} ${context.projectKind}`,
       cancellable: true,
     },
     (progress, token) => {
-      return executeTestCommand(competitionPath, progress, token);
+      return executeTestCommand(context, progress, token);
     },
   );
 };
 
 function executeTestCommand(
-  competitionPath: string,
+  context: ProgressCliCommandContext,
   progress: Progress,
   token: vscode.CancellationToken,
 ): Promise<void> {
   return new Promise<void>((resolve, reject) => {
-    const child = spawn("aqora", ["test", "-p", competitionPath], {
+    const child = spawn("aqora", context.commandArgs, {
       stdio: "pipe",
     });
 
@@ -55,16 +45,26 @@ function executeTestCommand(
       reject(new Error("Test submission process was canceled."));
     });
 
-    handleProcessOutput(child, progress);
-    handleProcessExit(child, resolve, reject);
+    handleProcessOutput(child, progress, context.projectKind, context.kind);
+    handleProcessExit(
+      child,
+      resolve,
+      reject,
+      context.projectKind,
+      context.kind,
+    );
   });
 }
 
 function handleProcessOutput(
   child: ChildProcessWithoutNullStreams,
   progress: Progress,
+  projectKind: AqoraProjectType,
+  contextKind: ContextKind,
 ) {
-  const outputChannel = vscode.window.createOutputChannel("Test Submission");
+  const outputChannel = vscode.window.createOutputChannel(
+    `${contextKind} ${projectKind}`,
+  );
   let progressPercentage = 0;
 
   child.stdout.on("data", (data) => {
@@ -94,15 +94,21 @@ function handleProcessExit(
   child: ChildProcessWithoutNullStreams,
   resolve: () => void,
   reject: (error: Error) => void,
+  projectKind: AqoraProjectType,
+  contextKind: ContextKind,
 ) {
   child.on("exit", (code: number) => {
     if (code === 0) {
       vscode.window.showInformationMessage(
-        "Test submission completed successfully.",
+        `${contextKind} ${projectKind} completed successfully.`,
       );
       resolve();
     } else {
-      reject(new Error(`Test submission failed with exit code ${code}.`));
+      reject(
+        new Error(
+          `${projectKind} ${contextKind} failed with exit code ${code}.`,
+        ),
+      );
     }
   });
 
@@ -127,10 +133,5 @@ function updateProgress(
   }, MESSAGE_DISPLAY_TIME);
   return progressPercentage;
 }
-
-export const testSubmissionDisposable = vscode.commands.registerCommand(
-  "aqora.test",
-  testSubmission,
-);
 
 const MESSAGE_DISPLAY_TIME = 2000;

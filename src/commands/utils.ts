@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { platform } from "os";
 import { exec } from "child_process";
+import { AqoraProjectType, GlobalArgsImpl } from "../globalArgs";
 
 export async function askForSingleFolderPath(): Promise<string | null> {
   const options: vscode.OpenDialogOptions = {
@@ -68,4 +69,33 @@ export function isAqoraInstalled(): Promise<boolean> {
       }
     });
   });
+}
+
+export async function currentOrSelectedProject(
+  process: (projectPath: string, kind: AqoraProjectType) => Promise<any> | void,
+) {
+  const aqoraProject = await GlobalArgsImpl.getInstance().aqoraProject();
+  const currentPath = GlobalArgsImpl.getInstance().currentPath();
+
+  if (aqoraProject && currentPath) {
+    await process(currentPath, aqoraProject.tool.aqora.type);
+    return;
+  }
+
+  const projectPath = await askForSingleFolderPath();
+
+  if (!projectPath) {
+    vscode.window.showErrorMessage("Please specify a project folder.");
+    return;
+  }
+
+  const selectedAqoraProject =
+    await GlobalArgsImpl.getInstance().aqoraProject(projectPath);
+
+  if (!selectedAqoraProject) {
+    vscode.window.showErrorMessage("Selected is not Aqora project.");
+    return;
+  }
+
+  await process(projectPath, selectedAqoraProject.tool.aqora.type);
 }

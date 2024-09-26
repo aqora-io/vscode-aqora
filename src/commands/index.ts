@@ -1,16 +1,18 @@
 import * as vscode from "vscode";
 import { templateCompetitionDisposable } from "./competitions";
-import { testSubmissionDisposable } from "./competitions/test";
 import { loginDisposable } from "./login";
+import { testProjectDisposable } from "./testProject";
+import { uploadDisposable } from "./upload";
 
-const disposable = [
+const disposables = [
   templateCompetitionDisposable,
   loginDisposable,
-  testSubmissionDisposable,
+  testProjectDisposable,
+  uploadDisposable,
 ];
 
 export default function registerCommands(
   context: vscode.ExtensionContext,
 ): void {
-  disposable.map((disposable) => context.subscriptions.push(disposable));
+  disposables.map((disposable) => context.subscriptions.push(disposable));
 }
