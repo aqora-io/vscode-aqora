@@ -1,14 +1,31 @@
 import { URL } from "url";
 import * as vscode from "vscode";
-import * as path from "path";
+import * as p from "path";
 import * as fs from "fs";
+
+export type AqoraProjectType = "submission" | "use_case";
+
+interface AqoraProject {
+  project: {
+    name: string;
+    version: string;
+    requiresPython: string;
+    dependencies: string[];
+  };
+  tool: {
+    aqora: {
+      type: AqoraProjectType;
+    };
+  };
+}
 
 export interface GlobalArgs {
   url: URL;
 
   aqoraUrl(): URL;
   graphqlUrl(): URL;
-  isAqoraProject(): Promise<boolean>;
+  isAqoraProject(customPath?: string): Promise<boolean>;
+  aqoraProject(customPath?: string): Promise<AqoraProject | undefined>;
   currentPath(): string | undefined;
 }
 
@@ -36,21 +53,15 @@ export class GlobalArgsImpl implements GlobalArgs {
   graphqlUrl(): URL {
     return new URL("/graphql", this.aqoraUrl());
   }
-  isAqoraProject(): Promise<boolean> {
-    return isAqoraProject();
+  isAqoraProject(customPath?: string): Promise<boolean> {
+    return isAqoraProject(customPath);
+  }
+  aqoraProject(customPath?: string): Promise<AqoraProject | undefined> {
+    return getAqoraProject(customPath);
   }
   currentPath(): string | undefined {
     return getCurrentPath();
   }
-}
-
-interface AqoraProject {
-  project: {
-    name: string;
-    version: string;
-    requiresPython: string;
-    dependencies: string[];
-  };
 }
 
 function getCurrentPath() {
@@ -63,35 +74,50 @@ function getCurrentPath() {
   return workspaceFolders[0].uri.path;
 }
 
-async function isAqoraProject(): Promise<boolean> {
-  const currentPath = getCurrentPath();
+async function getAqoraProject(
+  customPath?: string,
+): Promise<AqoraProject | undefined> {
+  const path = customPath ?? getCurrentPath();
 
-  if (!currentPath) {
-    vscode.window.showErrorMessage("No workspace folder is open.");
-    return false;
+  if (!path) {
+    vscode.window.showErrorMessage("No folder open.");
+    return;
   }
 
-  const pyprojectPath = path.join(currentPath, "pyproject.toml");
+  if (!fs.statSync(path).isDirectory()) {
+    vscode.window.showErrorMessage("Invalid path.");
+    return;
+  }
+
+  const pyprojectPath = p.join(path, "pyproject.toml");
 
   if (!fs.existsSync(pyprojectPath)) {
     vscode.window.showInformationMessage("No pyproject.toml file found.");
-    return false;
   }
 
   try {
     const { parse } = await import("smol-toml");
-
     const pyprojectContent = fs.readFileSync(pyprojectPath, "utf8");
-    const parsedToml = parse(pyprojectContent) as unknown as AqoraProject;
-
-    if (parsedToml.project && parsedToml.project.name === "submission") {
-      return true;
-    } else {
-      vscode.window.showInformationMessage("This is not an Aqora project.");
-      return false;
-    }
+    return parse(pyprojectContent) as unknown as AqoraProject;
   } catch (error) {
     vscode.window.showErrorMessage("Error reading pyproject.toml: " + error);
+    return;
+  }
+}
+
+async function isAqoraProject(customPath?: string): Promise<boolean> {
+  const aqoraProject = await getAqoraProject(customPath);
+
+  if (!aqoraProject) {
     return false;
   }
+
+  if (
+    aqoraProject.tool.aqora.type === "use_case" ||
+    aqoraProject.tool.aqora.type === "submission"
+  ) {
+    return true;
+  }
+
+  return false;
 }

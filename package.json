@@ -31,7 +31,11 @@
       },
       {
         "command": "aqora.test",
-        "title": "Aqora: Test your submission"
+        "title": "Aqora: Test your aqora project."
+      },
+      {
+        "command": "aqora.uplaod",
+        "title": "Aqora: Uplaod your project to aqora platform."
       }
     ]
   },
