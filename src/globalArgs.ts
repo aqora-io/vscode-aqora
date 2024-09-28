@@ -27,10 +27,13 @@ export interface GlobalArgs {
   isAqoraProject(customPath?: string): Promise<boolean>;
   aqoraProject(customPath?: string): Promise<AqoraProject | undefined>;
   currentPath(): string | undefined;
+  setExtensionPath(path: string): void;
+  getExtensionPath(): string;
 }
 
 export class GlobalArgsImpl implements GlobalArgs {
   url: URL;
+  extensionPath: string | undefined;
   private static instance: GlobalArgsImpl;
 
   private constructor() {
@@ -62,6 +65,15 @@ export class GlobalArgsImpl implements GlobalArgs {
   currentPath(): string | undefined {
     return getCurrentPath();
   }
+  setExtensionPath(path: string): void {
+    this.extensionPath = path;
+  }
+  getExtensionPath(): string {
+    if (!this.extensionPath) {
+      throw new Error("Extension path is not set.");
+    }
+    return this.extensionPath;
+  }
 }
 
 function getCurrentPath() {
@@ -80,7 +92,6 @@ async function getAqoraProject(
   const path = customPath ?? getCurrentPath();
 
   if (!path) {
-    vscode.window.showErrorMessage("No folder open.");
     return;
   }
 
