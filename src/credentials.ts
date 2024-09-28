@@ -150,4 +150,11 @@ async function getAccessToken(): Promise<string | null> {
   });
 }
 
-export { getAccessToken };
+async function isUserConnected(): Promise<boolean> {
+  return withLockedCredentials(async (file: CredentialsFile) => {
+    const file_credentials = file.credentials[aqoraUrl.href];
+    return !!file_credentials;
+  });
+}
+
+export { getAccessToken, isUserConnected };

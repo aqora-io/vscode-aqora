@@ -1,8 +1,8 @@
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import * as vscode from "vscode";
 import { AqoraProjectType } from "../globalArgs";
+import { Progress } from "./types";
 
-type Progress = vscode.Progress<{ message?: string; increment?: number }>;
 type ContextKind = "Test" | "Upload";
 
 export interface ProgressCliCommandContext {

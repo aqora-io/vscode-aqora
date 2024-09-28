@@ -3,8 +3,6 @@ import { gql } from "../../graphql";
 import {
   Login_Page_User_MutationMutation,
   Login_Page_User_MutationMutationVariables,
-  Oauth2_Token_MutationMutation,
-  Oauth2_Token_MutationMutationVariables,
 } from "../../graphql/graphql";
 import {
   Oauth2_Authorize_Page_MutationMutation,
@@ -13,19 +11,13 @@ import {
 import { URL } from "url";
 import * as crypto from "crypto";
 import { base64UrlSafeEncode } from "../utils";
-import { hostname } from "os";
 import ApolloClient from "apollo-client";
 import { HttpLink } from "apollo-link-http";
 import { InMemoryCache } from "apollo-cache-inmemory";
 import fetch from "cross-fetch";
 import { GlobalArgsImpl } from "../../globalArgs";
-import {
-  Credentials,
-  CredentialsFile,
-  withLockedCredentials,
-} from "../../credentials";
-import { CamelToSnakeCaseNested } from "../../utils";
-import { DateTime } from "luxon";
+import { clientId, createCredentials } from "./createCredentials";
+import { isUserConnected } from "../../credentials";
 
 const LOGIN_PAGE_USER_MUTATION = gql(`
   mutation LOGIN_PAGE_USER_MUTATION($input: LoginUserInput!) {
@@ -47,24 +39,6 @@ const OAUTH2_AUTHORIZE_PAGE_MUTATION = gql(`
   }
 `);
 
-const OAUTH2_TOKEN_MUTATION = gql(` 
-  mutation OAUTH2_TOKEN_MUTATION($code: String!, $clientId: String!, $redirectUri: Url!) {
-    oauth2Token(
-      input: { code: $code, clientId: $clientId, redirectUri: $redirectUri }
-    ) {
-      clientError
-      unauthorized
-      issued {
-        expiresIn
-        accessToken
-        refreshToken
-      }
-    }
-  }
-`);
-
-const CLIENT_ID_PREFIX = "localhost-";
-
 let capturedHeaders: Headers | null = null;
 
 const customFetch = async (uri: string, options: RequestInit) => {
@@ -72,18 +46,6 @@ const customFetch = async (uri: string, options: RequestInit) => {
   capturedHeaders = response.headers;
   return response;
 };
-
-function clientId(): string {
-  let host: string;
-
-  try {
-    host = hostname();
-  } catch (error) {
-    host = "unknown";
-  }
-
-  return `${CLIENT_ID_PREFIX}${host}`;
-}
 
 const endpoint = GlobalArgsImpl.getInstance().graphqlUrl();
 const aqoraUrl = GlobalArgsImpl.getInstance().aqoraUrl();
@@ -121,6 +83,10 @@ async function getPassword(): Promise<string | undefined> {
 }
 
 export async function login() {
+  if (await isUserConnected()) {
+    vscode.window.showInformationMessage("You are already logged in.");
+    return;
+  }
   const progressOptions: vscode.ProgressOptions = {
     location: vscode.ProgressLocation.Notification,
     title: "Login",
@@ -227,39 +193,8 @@ export async function login() {
       return;
     }
 
-    withLockedCredentials(async (file: CredentialsFile) => {
-      const variables: Oauth2_Token_MutationMutationVariables = {
-        clientId: clientId(),
-        code: oauthTokenCode,
-        redirectUri,
-      };
-      const { data, errors } =
-        await client.mutate<Oauth2_Token_MutationMutation>({
-          mutation: OAUTH2_TOKEN_MUTATION,
-          variables,
-        });
-
-      if (errors || data?.oauth2Token.unauthorized) {
-        vscode.window.showErrorMessage("GraphQL response missing data");
-        return;
-      }
-
-      if (!data?.oauth2Token.issued) {
-        vscode.window.showErrorMessage("GraphQL response missing issued");
-        return;
-      }
-
-      const newCredentials: CamelToSnakeCaseNested<Credentials> = {
-        client_id: clientId(),
-        access_token: data.oauth2Token.issued.accessToken,
-        refresh_token: data.oauth2Token.issued.refreshToken,
-        expires_at: DateTime.utc()
-          .plus({ seconds: data.oauth2Token.issued.expiresIn })
-          .toString(),
-      };
-      file.credentials[aqoraUrl.href] = newCredentials;
-      progress.report({ message: "Authenticated!" });
-    });
+    await createCredentials(oauthTokenCode, aqoraUrl, redirectUri, client);
+    progress.report({ message: "Authenticated!" });
 
     vscode.window.showInformationMessage(
       "Login successful! \n VS Code will restart in 5 seconds to make sure everything works.",
@@ -270,7 +205,7 @@ export async function login() {
   });
 }
 
-export const loginDisposable = vscode.commands.registerCommand(
-  "aqora.login",
+export const interactiveLoginDisposable = vscode.commands.registerCommand(
+  "aqora.interactiveLogin",
   login,
 );
