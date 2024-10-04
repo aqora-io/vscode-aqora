@@ -26,10 +26,6 @@
         "title": "Aqora: Clone a template from aqora.io."
       },
       {
-        "command": "aqora.interactiveLogin",
-        "title": "Aqora: Login into aqora platform by using email/password."
-      },
-      {
         "command": "aqora.login",
         "title": "Aqora: Login into aqora via OAuth2."
       },
