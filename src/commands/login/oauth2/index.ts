@@ -58,6 +58,13 @@ async function login() {
     redirectUri,
     client,
   );
+
+  vscode.window.showInformationMessage(
+    "Login successful! \n VS Code will restart in 5 seconds to make sure everything works.",
+  );
+  setTimeout(() => {
+    vscode.commands.executeCommand("workbench.action.reloadWindow");
+  }, 5000);
 }
 
 export const loginDisposable = vscode.commands.registerCommand(
