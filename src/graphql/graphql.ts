@@ -67,6 +67,7 @@ export type Action =
   | 'DELETE_TAG'
   | 'DELETE_TOPIC'
   | 'DELETE_USER'
+  | 'FETCH_WEBSITE_METADATA'
   | 'PUBLISH_VOTE'
   | 'READ_COMMENT'
   | 'READ_COMPETITION'
@@ -113,9 +114,27 @@ export type ArchiveKind =
   | '%future added value';
 
 export type Badge =
+  /** BIG Quantum Hackathon by QuantX, October 2021, Paris (FR) */
+  | 'BIG_PARIS_2021'
+  /** BIG Quantum Hackathon by the Chicago Quantum Exchange & QuantX, Sept 2023, Chicago (USA) */
+  | 'CHICAGO_2023'
+  /** Quantum Hackathon by QuantX, October 2022, Grenoble (FR) */
+  | 'GRENOBLE_2022'
+  /** Quantum Hackathon by Québec Quantique & QuantX, June 2022, Montreal (CAN) */
+  | 'MONTREAL_2022'
+  /** Quantum hackathon by QuantX, March 2021, Paris (FR) */
+  | 'PARIS_2021'
+  /** BIG QC-AI-HPC Hackathon by QuantX, March 2023, Paris (FR) */
+  | 'PARIS_2023'
+  /** BIG Quantum Hackathon Sports Edition by QuantX & Aqora, May 2024, Paris (FR) */
   | 'PARIS_2024_HACKERS'
+  /** BIG Quantum Hackathon Sports Edition by QuantX & Aqora, May 2024, Paris (FR) */
   | 'PARIS_2024_WINNERS'
+  /** Badge awarded upon first submission */
+  | 'QUANTUM_PIONEER'
   | 'TEST'
+  /** ICTP - Quantinuum Quantum Hackathon, April 2023, Trieste (IT) */
+  | 'TRIESTE_2023'
   | '%future added value';
 
 export type Comment = Node & Votable & {
@@ -169,13 +188,14 @@ export type CommentEdge = {
   node: Comment;
 };
 
-export type Competition = Node & Subscribable & {
+export type Competition = ForumOwner & Node & Subscribable & {
   __typename?: 'Competition';
   banner: Maybe<Scalars['Url']['output']>;
   createdAt: Scalars['DateTime']['output'];
   description: Maybe<Scalars['String']['output']>;
   entityRuleAgreements: CompetitionRuleAgreementConnection;
   entitySubscription: Maybe<SubjectSubscription>;
+  forum: Forum;
   host: Entity;
   id: Scalars['ID']['output'];
   isPrivate: Scalars['Boolean']['output'];
@@ -191,7 +211,6 @@ export type Competition = Node & Subscribable & {
   tags: TagConnection;
   thumbnail: Maybe<Scalars['Url']['output']>;
   title: Scalars['String']['output'];
-  topics: TopicConnection;
   useCase: UseCase;
   viewerCan: Scalars['Boolean']['output'];
 };
@@ -255,15 +274,6 @@ export type CompetitionTagsArgs = {
   before: InputMaybe<Scalars['String']['input']>;
   first: InputMaybe<Scalars['Int']['input']>;
   last: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type CompetitionTopicsArgs = {
-  after: InputMaybe<Scalars['String']['input']>;
-  before: InputMaybe<Scalars['String']['input']>;
-  first: InputMaybe<Scalars['Int']['input']>;
-  last: InputMaybe<Scalars['Int']['input']>;
-  order: InputMaybe<VotableOrder>;
 };
 
 
@@ -471,6 +481,7 @@ export type CreateTagInput = {
 export type CreateTopicInput = {
   description: InputMaybe<Scalars['String']['input']>;
   title: Scalars['String']['input'];
+  url: InputMaybe<Scalars['Url']['input']>;
 };
 
 export type DeletedComment = {
@@ -598,13 +609,14 @@ export type EntityVote = {
   votedAt: Scalars['DateTime']['output'];
 };
 
-export type Event = Node & {
+export type Event = ForumOwner & Node & {
   __typename?: 'Event';
   agenda: Maybe<Scalars['JSON']['output']>;
   banner: Maybe<Scalars['Url']['output']>;
   competitions: EventCompetitionConnection;
   createdAt: Scalars['DateTime']['output'];
   description: Maybe<Scalars['String']['output']>;
+  forum: Forum;
   host: Entity;
   id: Scalars['ID']['output'];
   isPrivate: Scalars['Boolean']['output'];
@@ -802,14 +814,17 @@ export type FinishUploadFileInput = {
   key: Scalars['String']['input'];
 };
 
-export type Forum = Node & Subscribable & {
+export type Forum = ForumOwner & Node & Subscribable & {
   __typename?: 'Forum';
   createdAt: Scalars['DateTime']['output'];
   entitySubscription: Maybe<SubjectSubscription>;
+  forum: Forum;
   guidelines: Maybe<Scalars['String']['output']>;
   icon: Maybe<Scalars['Url']['output']>;
   id: Scalars['ID']['output'];
   orderingPriority: Scalars['Int']['output'];
+  owner: ForumOwner;
+  ownerKind: ForumOwnerKind;
   shortDescription: Scalars['String']['output'];
   slug: Scalars['String']['output'];
   title: Scalars['String']['output'];
@@ -855,6 +870,25 @@ export type ForumEdge = {
   /** The item at the end of the edge */
   node: Forum;
 };
+
+export type ForumOwner = {
+  forum: Forum;
+  id: Scalars['ID']['output'];
+  slug: Scalars['String']['output'];
+  viewerCan: Scalars['Boolean']['output'];
+};
+
+
+export type ForumOwnerViewerCanArgs = {
+  action: Action;
+  asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+};
+
+export type ForumOwnerKind =
+  | 'COMPETITION'
+  | 'EVENT'
+  | 'TOP_LEVEL'
+  | '%future added value';
 
 export type ForumSubscription = Node & SubjectSubscription & {
   __typename?: 'ForumSubscription';
@@ -909,8 +943,7 @@ export type Mutation = {
   createProjectVersionFileMultipartUpload: CreateMultipartUploadResponse;
   createSubmissionVersion: ProjectVersionEdge;
   createTag: TagEdge;
-  createTopicForCompetition: TopicEdge;
-  createTopicForForum: TopicEdge;
+  createTopic: TopicEdge;
   createUseCaseVersion: ProjectVersionEdge;
   deleteComment: Scalars['ID']['output'];
   deleteCompetition: Scalars['ID']['output'];
@@ -921,6 +954,7 @@ export type Mutation = {
   deleteTag: Scalars['ID']['output'];
   deleteTopic: Scalars['ID']['output'];
   deleteUser: Scalars['ID']['output'];
+  fetchWebsiteMetadata: WebsiteMetadata;
   finishUploadFile: FinishUploadFile;
   initUploadFile: InitUploadFile;
   loginUser: UserEdge;
@@ -1059,13 +1093,7 @@ export type MutationCreateTagArgs = {
 };
 
 
-export type MutationCreateTopicForCompetitionArgs = {
-  competitionId: Scalars['ID']['input'];
-  input: CreateTopicInput;
-};
-
-
-export type MutationCreateTopicForForumArgs = {
+export type MutationCreateTopicArgs = {
   forumId: Scalars['ID']['input'];
   input: CreateTopicInput;
 };
@@ -1119,6 +1147,11 @@ export type MutationDeleteTopicArgs = {
 
 export type MutationDeleteUserArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationFetchWebsiteMetadataArgs = {
+  url: Scalars['Url']['input'];
 };
 
 
@@ -1988,13 +2021,13 @@ export type Topic = Node & Subscribable & Votable & {
   author: Entity;
   commentCount: Scalars['Int']['output'];
   comments: CommentConnection;
-  competition: Maybe<Competition>;
   createdAt: Scalars['DateTime']['output'];
   description: Maybe<Scalars['String']['output']>;
   entitySubscription: Maybe<SubjectSubscription>;
-  forum: Maybe<Forum>;
+  forum: Forum;
   id: Scalars['ID']['output'];
   title: Scalars['String']['output'];
+  url: Maybe<Scalars['String']['output']>;
   viewerCan: Scalars['Boolean']['output'];
   voted: Maybe<EntityVote>;
   votes: Scalars['Int']['output'];
@@ -2339,24 +2372,16 @@ export type VoteKind =
   | 'UPVOTE'
   | '%future added value';
 
+export type WebsiteMetadata = {
+  __typename?: 'WebsiteMetadata';
+  description: Maybe<Scalars['String']['output']>;
+  title: Maybe<Scalars['String']['output']>;
+};
+
 export type Get_CompetitionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type Get_CompetitionsQuery = { __typename?: 'Query', competitions: { __typename?: 'CompetitionConnection', edges: Array<{ __typename?: 'CompetitionEdge', node: { __typename?: 'Competition', slug: string, title: string, shortDescription: string } }> } };
-
-export type Login_Page_User_MutationMutationVariables = Exact<{
-  input: LoginUserInput;
-}>;
-
-
-export type Login_Page_User_MutationMutation = { __typename?: 'Mutation', loginUser: { __typename?: 'UserEdge', node: { __typename?: 'User', id: string | number } } };
-
-export type Oauth2_Authorize_Page_MutationMutationVariables = Exact<{
-  input: Oauth2AuthorizeInput;
-}>;
-
-
-export type Oauth2_Authorize_Page_MutationMutation = { __typename?: 'Mutation', oauth2Authorize: { __typename?: 'Oauth2AuthorizeOutput', unauthorized: boolean, clientError: boolean, redirectUri: URL | null } };
 
 export type Oauth2_Token_MutationMutationVariables = Exact<{
   code: Scalars['String']['input'];
@@ -2377,7 +2402,5 @@ export type Refresh_TokenMutation = { __typename?: 'Mutation', oauth2Refresh: { 
 
 
 export const Get_CompetitionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GET_COMPETITIONS"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"competitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"edges"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"node"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"shortDescription"}}]}}]}}]}}]}}]} as unknown as DocumentNode<Get_CompetitionsQuery, Get_CompetitionsQueryVariables>;
-export const Login_Page_User_MutationDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"LOGIN_PAGE_USER_MUTATION"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"LoginUserInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"loginUser"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"node"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]} as unknown as DocumentNode<Login_Page_User_MutationMutation, Login_Page_User_MutationMutationVariables>;
-export const Oauth2_Authorize_Page_MutationDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"OAUTH2_AUTHORIZE_PAGE_MUTATION"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Oauth2AuthorizeInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"oauth2Authorize"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"unauthorized"}},{"kind":"Field","name":{"kind":"Name","value":"clientError"}},{"kind":"Field","name":{"kind":"Name","value":"redirectUri"}}]}}]}}]} as unknown as DocumentNode<Oauth2_Authorize_Page_MutationMutation, Oauth2_Authorize_Page_MutationMutationVariables>;
 export const Oauth2_Token_MutationDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"OAUTH2_TOKEN_MUTATION"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"code"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"clientId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"redirectUri"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Url"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"oauth2Token"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"code"},"value":{"kind":"Variable","name":{"kind":"Name","value":"code"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"clientId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"clientId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"redirectUri"},"value":{"kind":"Variable","name":{"kind":"Name","value":"redirectUri"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"clientError"}},{"kind":"Field","name":{"kind":"Name","value":"unauthorized"}},{"kind":"Field","name":{"kind":"Name","value":"issued"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"expiresIn"}},{"kind":"Field","name":{"kind":"Name","value":"accessToken"}},{"kind":"Field","name":{"kind":"Name","value":"refreshToken"}}]}}]}}]}}]} as unknown as DocumentNode<Oauth2_Token_MutationMutation, Oauth2_Token_MutationMutationVariables>;
 export const Refresh_TokenDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"REFRESH_TOKEN"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"clientId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"refreshToken"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"oauth2Refresh"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"clientId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"clientId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"refreshToken"},"value":{"kind":"Variable","name":{"kind":"Name","value":"refreshToken"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"clientError"}},{"kind":"Field","name":{"kind":"Name","value":"unauthorized"}},{"kind":"Field","name":{"kind":"Name","value":"issued"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"expiresIn"}},{"kind":"Field","name":{"kind":"Name","value":"accessToken"}},{"kind":"Field","name":{"kind":"Name","value":"refreshToken"}}]}}]}}]}}]} as unknown as DocumentNode<Refresh_TokenMutation, Refresh_TokenMutationVariables>;

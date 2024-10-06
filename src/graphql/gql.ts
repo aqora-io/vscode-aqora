@@ -14,8 +14,6 @@ import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-
  */
 const documents = {
     "\n  query GET_COMPETITIONS {\n    competitions {\n      edges {\n        node { \n          slug\n          title\n          shortDescription\n        }\n      }\n    }\n  }\n": types.Get_CompetitionsDocument,
-    "\n  mutation LOGIN_PAGE_USER_MUTATION($input: LoginUserInput!) {\n    loginUser(input: $input) {\n      node {\n        id\n      }\n    }\n  }\n": types.Login_Page_User_MutationDocument,
-    " \n  mutation OAUTH2_AUTHORIZE_PAGE_MUTATION($input: Oauth2AuthorizeInput!) {\n    oauth2Authorize(input: $input) {\n      unauthorized\n      clientError\n      redirectUri\n    }\n  }\n": types.Oauth2_Authorize_Page_MutationDocument,
     " \n  mutation OAUTH2_TOKEN_MUTATION($code: String!, $clientId: String!, $redirectUri: Url!) {\n    oauth2Token(\n      input: { code: $code, clientId: $clientId, redirectUri: $redirectUri }\n    ) {\n      clientError\n      unauthorized\n      issued {\n        expiresIn\n        accessToken\n        refreshToken\n      }\n    }\n  }\n": types.Oauth2_Token_MutationDocument,
     "\n  mutation REFRESH_TOKEN($clientId: String!, $refreshToken: String!) {\n    oauth2Refresh(input: { clientId: $clientId, refreshToken: $refreshToken }) {\n      clientError\n      unauthorized\n      issued {\n        expiresIn\n        accessToken\n        refreshToken\n      }\n    }\n  }\n": types.Refresh_TokenDocument,
 };
@@ -38,14 +36,6 @@ export function gql(source: string): unknown;
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  query GET_COMPETITIONS {\n    competitions {\n      edges {\n        node { \n          slug\n          title\n          shortDescription\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query GET_COMPETITIONS {\n    competitions {\n      edges {\n        node { \n          slug\n          title\n          shortDescription\n        }\n      }\n    }\n  }\n"];
-/**
- * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function gql(source: "\n  mutation LOGIN_PAGE_USER_MUTATION($input: LoginUserInput!) {\n    loginUser(input: $input) {\n      node {\n        id\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation LOGIN_PAGE_USER_MUTATION($input: LoginUserInput!) {\n    loginUser(input: $input) {\n      node {\n        id\n      }\n    }\n  }\n"];
-/**
- * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function gql(source: " \n  mutation OAUTH2_AUTHORIZE_PAGE_MUTATION($input: Oauth2AuthorizeInput!) {\n    oauth2Authorize(input: $input) {\n      unauthorized\n      clientError\n      redirectUri\n    }\n  }\n"): (typeof documents)[" \n  mutation OAUTH2_AUTHORIZE_PAGE_MUTATION($input: Oauth2AuthorizeInput!) {\n    oauth2Authorize(input: $input) {\n      unauthorized\n      clientError\n      redirectUri\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

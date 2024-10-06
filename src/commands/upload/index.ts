@@ -8,7 +8,6 @@ async function uplaod() {
       progressCommand({
         path: projectPath,
         projectKind,
-        kind: "Upload",
         commandArgs: ["upload", "-p", projectPath],
       }),
     );

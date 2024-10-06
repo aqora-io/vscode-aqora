@@ -73,7 +73,7 @@ export function startLocalServerForCallback(port: number): Promise<string> {
 
     server.listen(port, () => {
       console.log(
-        `Listening for OAuth callback on http://localhost:${port}/callback`,
+        `Listening for OAuth callback on http://127.0.0.1:${port}/callback`,
       );
     });
 

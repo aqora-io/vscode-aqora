@@ -27,7 +27,6 @@ export interface GlobalArgs {
   isAqoraProject(customPath?: string): Promise<boolean>;
   aqoraProject(customPath?: string): Promise<AqoraProject | undefined>;
   currentPath(): string | undefined;
-  setExtensionPath(path: string): void;
   getExtensionPath(): string;
 }
 

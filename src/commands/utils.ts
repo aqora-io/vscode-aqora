@@ -72,14 +72,17 @@ export function isAqoraInstalled(): Promise<boolean> {
 }
 
 export async function currentOrSelectedProject(
-  process: (projectPath: string, kind: AqoraProjectType) => Promise<any> | void,
+  process: (
+    projectPath: string,
+    kind: AqoraProjectType,
+  ) => Promise<string | undefined | void> | void,
 ) {
   const aqoraProject = await GlobalArgsImpl.getInstance().aqoraProject();
   const currentPath = GlobalArgsImpl.getInstance().currentPath();
 
   if (aqoraProject && currentPath) {
     await process(currentPath, aqoraProject.tool.aqora.type);
-    return;
+    return currentPath;
   }
 
   const projectPath = await askForSingleFolderPath();
@@ -98,4 +101,5 @@ export async function currentOrSelectedProject(
   }
 
   await process(projectPath, selectedAqoraProject.tool.aqora.type);
+  return projectPath;
 }

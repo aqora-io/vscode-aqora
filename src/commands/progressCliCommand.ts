@@ -1,57 +1,80 @@
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import * as vscode from "vscode";
-import { AqoraProjectType } from "../globalArgs";
+import { AqoraProjectType, GlobalArgsImpl } from "../globalArgs";
 import { Progress } from "./types";
 
-type ContextKind = "Test" | "Upload";
+type ContextKind = "test" | "upload" | "template" | "info";
+type AqoraProjectKind = AqoraProjectType | "clone";
 
 export interface ProgressCliCommandContext {
   path: string;
-  projectKind: AqoraProjectType;
-  kind: ContextKind;
-  commandArgs: readonly string[];
+  projectKind: AqoraProjectKind;
+  commandArgs: readonly [ContextKind, ...string[]];
 }
 
-export const progressCommand = (
+const MESSAGE_DISPLAY_TIME = 2000;
+
+export const progressCommand = async (
   context: Readonly<ProgressCliCommandContext>,
-): void => {
-  vscode.window.withProgress(
+): Promise<void> => {
+  await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: `Running ${context.kind} ${context.projectKind}`,
+      title: `Running ${context.commandArgs[0]} ${context.projectKind}`,
       cancellable: true,
     },
-    (progress, token) => {
-      return executeTestCommand(context, progress, token);
+    async (progress, token) => {
+      await executeCommand(context, progress, token);
     },
   );
 };
 
-function executeTestCommand(
+function executeCommand(
   context: ProgressCliCommandContext,
   progress: Progress,
   token: vscode.CancellationToken,
 ): Promise<void> {
   return new Promise<void>((resolve, reject) => {
+    const abortController = new AbortController();
+    const { signal } = abortController;
+
+    token.onCancellationRequested(() => {
+      abortController.abort();
+      reject(
+        new Error(
+          `${context.commandArgs[0]} ${context.projectKind} process was canceled.`,
+        ),
+      );
+    });
+
     const child = spawn("aqora", context.commandArgs, {
-      stdio: "pipe",
+      env: {
+        ...process.env,
+        AQORA_URL: GlobalArgsImpl.getInstance()
+          .aqoraUrl()
+          .toString()
+          .slice(0, -1),
+      },
+      signal: signal,
+      killSignal: "SIGSTOP",
+      serialization: "json",
     });
 
     child.stdout.setEncoding("utf8");
     child.stderr.setEncoding("utf8");
 
-    token.onCancellationRequested(() => {
-      child.kill();
-      reject(new Error("Test submission process was canceled."));
-    });
-
-    handleProcessOutput(child, progress, context.projectKind, context.kind);
+    handleProcessOutput(
+      child,
+      progress,
+      context.projectKind,
+      context.commandArgs[0],
+    );
     handleProcessExit(
       child,
       resolve,
       reject,
       context.projectKind,
-      context.kind,
+      context.commandArgs[0],
     );
   });
 }
@@ -59,7 +82,7 @@ function executeTestCommand(
 function handleProcessOutput(
   child: ChildProcessWithoutNullStreams,
   progress: Progress,
-  projectKind: AqoraProjectType,
+  projectKind: AqoraProjectKind,
   contextKind: ContextKind,
 ) {
   const outputChannel = vscode.window.createOutputChannel(
@@ -85,7 +108,7 @@ function handleProcessOutput(
     progressPercentage = updateProgress(
       progressPercentage,
       progress,
-      "Oups... something got wrong",
+      "Oups... something went wrong",
     );
   });
 }
@@ -94,10 +117,10 @@ function handleProcessExit(
   child: ChildProcessWithoutNullStreams,
   resolve: () => void,
   reject: (error: Error) => void,
-  projectKind: AqoraProjectType,
+  projectKind: AqoraProjectKind,
   contextKind: ContextKind,
 ) {
-  child.on("exit", (code: number) => {
+  child.on("close", (code: number) => {
     if (code === 0) {
       vscode.window.showInformationMessage(
         `${contextKind} ${projectKind} completed successfully.`,
@@ -133,5 +156,3 @@ function updateProgress(
   }, MESSAGE_DISPLAY_TIME);
   return progressPercentage;
 }
-
-const MESSAGE_DISPLAY_TIME = 2000;
