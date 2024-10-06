@@ -1,0 +1,64 @@
+name: CI/CD for VSCode Extension
+
+on:
+  push:
+    branches:
+      - "*"
+    tags:
+      - "*"
+
+jobs:
+  commit-verification:
+    name: Run Cogitto Commit Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Cogitto
+        run: npm install -g cogitto
+
+      - run: |
+          cp cog.toml $HOME/.config/cog/cog.toml
+          echo "Cogitto config copied"
+
+      - name: Run Cogitto to Check Commit Messages
+        run: cog verify --all --ignore-merge-commits
+        continue-on-error: false
+
+  publish-extension:
+    name: Publish VSCode Extension
+    runs-on: ubuntu-latest
+    needs: commit-verification
+    if: github.ref_type == 'tag' && github.ref == 'refs/tags/*' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install VSCE (CLI for managing VS Code extensions)
+        run: npm install -g @vscode/vsce
+
+      - name: Pre-Bump Hook (Cargo Set Version)
+        run: cargo set-version {{version}}
+
+      - name: Package and Publish Extension
+        run: |
+          vsce package
+          vsce publish
+        env:
+          VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
