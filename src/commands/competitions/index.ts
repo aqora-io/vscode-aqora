@@ -3,6 +3,7 @@ import { gql } from "../../graphql/gql";
 import { client as gqlClient } from "../../graphqlClient";
 import * as vscode from "vscode";
 import { askForSingleFolderPath, isAqoraInstalled } from "../utils";
+import { progressCommand } from "../progressCliCommand";
 
 const GET_COMPETITIONS = gql(`
   query GET_COMPETITIONS {
@@ -18,6 +19,8 @@ const GET_COMPETITIONS = gql(`
   }
 `);
 
+const competitionPath = (path: string, slug: string) => `${path}/${slug}`;
+
 async function templateCompetition() {
   const client = await gqlClient;
   const {
@@ -30,7 +33,7 @@ async function templateCompetition() {
   const competition = await vscode.window.showQuickPick(
     competitions.edges.map((competition) => ({
       label: competition.node.title,
-      details: competition.node.shortDescription,
+      detail: competition.node.shortDescription,
       id: competition.node.slug,
     })),
     { matchOnDetail: true },
@@ -41,18 +44,26 @@ async function templateCompetition() {
   }
 
   if (await isAqoraInstalled()) {
-    const userTemplatePath = await askForSingleFolderPath();
-    if (userTemplatePath) {
-      const CLITemplateCommmand = `aqora template ${competition.id} ${userTemplatePath}/${competition.id}`;
-      const terminal = vscode.window.createTerminal(
-        "Download " + competition.label,
-      );
-      terminal.sendText(CLITemplateCommmand);
-      terminal.show();
-      vscode.window.showInformationMessage(
-        "Template downloaded in " + userTemplatePath,
-      );
+    const userClonePath = await askForSingleFolderPath();
+    if (!userClonePath) {
+      vscode.window.showErrorMessage("Path not found.");
+      return;
     }
+    progressCommand({
+      path: userClonePath,
+      projectKind: "clone",
+      commandArgs: [
+        "template",
+        competition.id,
+        competitionPath(userClonePath, competition.id),
+      ],
+    }).then(() => {
+      vscode.commands.executeCommand(
+        "vscode.openFolder",
+        vscode.Uri.file(competitionPath(userClonePath, competition.id)),
+        true,
+      );
+    });
   }
 }
 

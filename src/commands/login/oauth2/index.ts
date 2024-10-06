@@ -27,7 +27,7 @@ function authorizeUrl(clientId: string, redirectUri: URL, state: string): URL {
 }
 
 async function initiateOAuthFlow(port: number): Promise<URL> {
-  const redirectUri = new URL(`http://localhost:${port}/callback`);
+  const redirectUri = new URL(`http://127.0.0.1:${port}/callback`);
   const state = base64UrlSafeEncode(Buffer.from(randomBytes(16)));
   const authUrl = authorizeUrl(clientId(), redirectUri, state);
 
@@ -64,7 +64,7 @@ async function login() {
   );
   setTimeout(() => {
     vscode.commands.executeCommand("workbench.action.reloadWindow");
-  }, 5000);
+  }, 3000);
 }
 
 export const loginDisposable = vscode.commands.registerCommand(

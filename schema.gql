@@ -33,6 +33,7 @@ enum Action {
   DELETE_TAG
   DELETE_TOPIC
   DELETE_USER
+  FETCH_WEBSITE_METADATA
   PUBLISH_VOTE
   READ_COMMENT
   READ_COMPETITION
@@ -79,9 +80,27 @@ enum ArchiveKind {
 }
 
 enum Badge {
+  """BIG Quantum Hackathon by QuantX, October 2021, Paris (FR)"""
+  BIG_PARIS_2021
+  """BIG Quantum Hackathon by the Chicago Quantum Exchange & QuantX, Sept 2023, Chicago (USA)"""
+  CHICAGO_2023
+  """Quantum Hackathon by QuantX, October 2022, Grenoble (FR)"""
+  GRENOBLE_2022
+  """Quantum Hackathon by Québec Quantique & QuantX, June 2022, Montreal (CAN)"""
+  MONTREAL_2022
+  """Quantum hackathon by QuantX, March 2021, Paris (FR)"""
+  PARIS_2021
+  """BIG QC-AI-HPC Hackathon by QuantX, March 2023, Paris (FR)"""
+  PARIS_2023
+  """BIG Quantum Hackathon Sports Edition by QuantX & Aqora, May 2024, Paris (FR)"""
   PARIS_2024_HACKERS
+  """BIG Quantum Hackathon Sports Edition by QuantX & Aqora, May 2024, Paris (FR)"""
   PARIS_2024_WINNERS
+  """Badge awarded upon first submission"""
+  QUANTUM_PIONEER
   TEST
+  """ICTP - Quantinuum Quantum Hackathon, April 2023, Trieste (IT)"""
+  TRIESTE_2023
 }
 
 type Comment implements Node & Votable {
@@ -117,12 +136,13 @@ type CommentEdge {
   node: Comment!
 }
 
-type Competition implements Node & Subscribable {
+type Competition implements ForumOwner & Node & Subscribable {
   banner: Url
   createdAt: DateTime!
   description: String
   entityRuleAgreements(after: String, before: String, entity: UsernameOrID, first: Int, last: Int): CompetitionRuleAgreementConnection!
   entitySubscription(entity: UsernameOrID): SubjectSubscription
+  forum: Forum!
   host: Entity!
   id: ID!
   isPrivate: Boolean!
@@ -138,7 +158,6 @@ type Competition implements Node & Subscribable {
   tags(after: String, before: String, first: Int, last: Int): TagConnection!
   thumbnail: Url
   title: String!
-  topics(after: String, before: String, first: Int, last: Int, order: VotableOrder): TopicConnection!
   useCase: UseCase!
   viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
 }
@@ -312,6 +331,7 @@ input CreateTagInput {
 input CreateTopicInput {
   description: String
   title: String!
+  url: Url
 }
 
 """
@@ -398,12 +418,13 @@ type EntityVote {
   votedAt: DateTime!
 }
 
-type Event implements Node {
+type Event implements ForumOwner & Node {
   agenda: JSON
   banner: Url
   competitions(after: String, before: String, first: Int, last: Int): EventCompetitionConnection!
   createdAt: DateTime!
   description: String
+  forum: Forum!
   host: Entity!
   id: ID!
   isPrivate: Boolean!
@@ -540,13 +561,16 @@ input FinishUploadFileInput {
   key: String!
 }
 
-type Forum implements Node & Subscribable {
+type Forum implements ForumOwner & Node & Subscribable {
   createdAt: DateTime!
   entitySubscription(entity: UsernameOrID): SubjectSubscription
+  forum: Forum!
   guidelines: String
   icon: Url
   id: ID!
   orderingPriority: Int!
+  owner: ForumOwner!
+  ownerKind: ForumOwnerKind!
   shortDescription: String!
   slug: String!
   title: String!
@@ -569,6 +593,19 @@ type ForumEdge {
   cursor: String!
   """The item at the end of the edge"""
   node: Forum!
+}
+
+interface ForumOwner {
+  forum: Forum!
+  id: ID!
+  slug: String!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+enum ForumOwnerKind {
+  COMPETITION
+  EVENT
+  TOP_LEVEL
 }
 
 type ForumSubscription implements Node & SubjectSubscription {
@@ -618,8 +655,7 @@ type Mutation {
   createProjectVersionFileMultipartUpload(chunks: [Int!]!, contentType: String, id: ID!): CreateMultipartUploadResponse!
   createSubmissionVersion(asEntity: UsernameOrID, competitionId: ID!, input: UpdateSubmissionInput!): ProjectVersionEdge!
   createTag(entityId: ID!, input: CreateTagInput!): TagEdge!
-  createTopicForCompetition(competitionId: ID!, input: CreateTopicInput!): TopicEdge!
-  createTopicForForum(forumId: ID!, input: CreateTopicInput!): TopicEdge!
+  createTopic(forumId: ID!, input: CreateTopicInput!): TopicEdge!
   createUseCaseVersion(competitionId: ID!, input: UpdateUseCaseInput!): ProjectVersionEdge!
   deleteComment(id: ID!): ID!
   deleteCompetition(id: ID!): ID!
@@ -630,6 +666,7 @@ type Mutation {
   deleteTag(tagId: ID!): ID!
   deleteTopic(id: ID!): ID!
   deleteUser(id: ID!): ID!
+  fetchWebsiteMetadata(url: Url!): WebsiteMetadata!
   finishUploadFile(input: FinishUploadFileInput!): FinishUploadFile!
   initUploadFile(input: InitUploadFileInput!): InitUploadFile!
   loginUser(input: LoginUserInput!): UserEdge!
@@ -1059,13 +1096,13 @@ type Topic implements Node & Subscribable & Votable {
   author: Entity!
   commentCount: Int!
   comments(after: String, before: String, first: Int, last: Int, order: VotableOrder): CommentConnection!
-  competition: Competition
   createdAt: DateTime!
   description: String
   entitySubscription(entity: UsernameOrID): SubjectSubscription
-  forum: Forum
+  forum: Forum!
   id: ID!
   title: String!
+  url: String
   viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
   voted: EntityVote
   votes: Int!
@@ -1283,4 +1320,9 @@ enum VotableOrder {
 enum VoteKind {
   DOWNVOTE
   UPVOTE
+}
+
+type WebsiteMetadata {
+  description: String
+  title: String
 }
