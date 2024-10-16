@@ -1,11 +1,14 @@
 name: CI/CD for VSCode Extension
 
 on:
-  workflow_call:
-  workflow_dispatch:
   push:
+    branches:
+      - main
     tags:
       - "*"
+  pull_request:
+  merge_group:
+  workflow_dispatch:
 
 jobs:
   git_check:
@@ -15,7 +18,7 @@ jobs:
     needs: git_check
     name: Publish VSCode Extension
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: "startsWith(github.ref, 'refs/tags/')"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
