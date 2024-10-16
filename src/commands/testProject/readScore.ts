@@ -2,12 +2,18 @@ import { decodeAsync } from "@msgpack/msgpack";
 import * as fs from "fs";
 import { projectLastRunResult } from "../../dirs";
 import { Readable } from "stream";
+import { Parser as PickleParser } from "pickleparser";
 
 interface ProjectRunResult {
-  score: Buffer;
+  score: number;
   numInputs: number;
   time: Date;
   useCaseVersion: string;
+}
+
+function unPickleScore(scoreBuffer: string): number {
+  const binaryBuffer = Buffer.from(scoreBuffer, "binary");
+  return new PickleParser().parse(binaryBuffer) as number;
 }
 
 export function readProjectLastRunResult(
@@ -36,8 +42,12 @@ export function readProjectLastRunResult(
 
         unpackedDataPromise
           .then((unpackedData: any) => {
+            console.log(
+              unPickleScore(unpackedData.score as string),
+              "THIS THE SCORE",
+            );
             const result: ProjectRunResult = {
-              score: unpackedData.score as Buffer,
+              score: unPickleScore(unpackedData.score as string),
               numInputs: unpackedData.num_inputs as number,
               time: new Date(unpackedData.time),
               useCaseVersion: unpackedData.use_case_version as string,

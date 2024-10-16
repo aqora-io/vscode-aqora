@@ -20,7 +20,7 @@ async function testProject() {
     readProjectLastRunResult(projectDir)
       .then((result) => {
         vscode.window.showInformationMessage(
-          `Great job! Your test scored ${result.score[3]}.`,
+          `Great job! Your test scored ${result.score}.`,
         );
       })
       .catch((_error) => {

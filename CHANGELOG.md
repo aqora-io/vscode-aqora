@@ -1,5 +1,6 @@
-## Unreleased (292e5db..286eeb3)
+## Unreleased (292e5db..2c79743)
 #### Bug Fixes
+- CHANGELOG - (2c79743) - Angel Dijoux
 - notified issues - (89f490b) - Angel Dijoux
 - rollback version - (38f8dce) - Angel Dijoux
 - remove files directive from package.json - (471e275) - Angel Dijoux
@@ -9,6 +10,7 @@
 - types issues - (5a4fcc1) - Angel Dijoux
 - almost all gql type error - (d1ab310) - Angel Dijoux
 #### Build system
+- 1.2.0 - (c5a33cf) - Angel Dijoux
 - 1.1.0 - (83cdbb7) - Angel Dijoux
 - 1.0.0 - (f7237cc) - Angel Dijoux
 - 1.0.0 - (132731f) - Angel Dijoux
@@ -36,6 +38,8 @@
 - first commit - (292e5db) - Angel Dijoux
 #### Miscellaneous Chores
 - **(revert)** downgrade minimum vscode version require - (293c52c) - Angel Dijoux
+- fix score reading - (b77c5dd) - Angel Dijoux
+- add changelog - (bccc027) - Angel Dijoux
 - move files - (04b42b9) - Angel Dijoux
 - remove interactive login - (4d8912c) - Angel Dijoux
 - improve the semver type - (5eb24cd) - Angel Dijoux
