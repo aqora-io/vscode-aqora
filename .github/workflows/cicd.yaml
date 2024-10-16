@@ -7,7 +7,7 @@ on:
 
 jobs:
   git_check:
-    uses: ./.github/workflows/git-check.yaml
+    uses: ./.github/workflows/git_check.yaml
 
   publish-extension:
     needs: git_check
