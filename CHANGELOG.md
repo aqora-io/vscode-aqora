@@ -1,4 +1,4 @@
-## v1.2.1 - 2024-10-16
+## Unreleased (292e5db..29c0a5c)
 #### Bug Fixes
 - notified issues - (89f490b) - Angel Dijoux
 - rollback version - (38f8dce) - Angel Dijoux
@@ -22,7 +22,7 @@
 - 0.1.0 - (cd08aef) - Angel Dijoux
 #### Continuous Integration
 - **(fix)** typo - (80ff6de) - Angel Dijoux
-- just release in ci, no publish - (a940e9e) - Angel Dijoux
+- just release in ci, no publish - (29c0a5c) - Angel Dijoux
 - remove conditions on runnig - (4c3b93b) - Angel Dijoux
 - be able to run workflow manually - (d11f98e) - Angel Dijoux
 - fix git check - (286eeb3) - Angel Dijoux
@@ -41,7 +41,6 @@
 - first commit - (292e5db) - Angel Dijoux
 #### Miscellaneous Chores
 - **(revert)** downgrade minimum vscode version require - (293c52c) - Angel Dijoux
-- bump version to 1.2.1 - (1929488) - Angel Dijoux
 - gen new changelog - (343e33b) - Angel Dijoux
 - generate changelog - (6d5c54c) - Angel Dijoux
 - remove changelog - (029f8df) - Angel Dijoux
