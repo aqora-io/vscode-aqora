@@ -28,21 +28,11 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Install pnpm
-        run: npm install -g pnpm
-
-      - name: Set up pnpm global bin directory
-        run: |
-          pnpm setup
-          export PNPM_HOME="${HOME}/.local/share/pnpm"
-          export PATH="$PNPM_HOME:$PATH"
-        shell: bash
-
       - name: Install dependencies
-        run: pnpm install
+        run: npm install
 
       - name: Install VSCE (CLI for managing VS Code extensions)
-        run: pnpm add -g @vscode/vsce
+        run: npm install -g @vscode/vsce
 
       - name: Package Extension
         run: vsce package
