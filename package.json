@@ -20,6 +20,15 @@
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
+    "menus": {
+      "notebook/toolbar": [
+        {
+          "command": "aqora.test",
+          "when": "resourceExtname == '.ipynb'",
+          "group": "navigation@1"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "aqora.templateCompetition",
@@ -31,7 +40,11 @@
       },
       {
         "command": "aqora.test",
-        "title": "Aqora: Test your aqora project."
+        "title": "Aqora: Test your aqora project.",
+        "icon": {
+          "dark": "images/icon_white.png",
+          "light": "images/icon_black.png"
+        }
       },
       {
         "command": "aqora.uplaod",

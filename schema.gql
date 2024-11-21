@@ -6,6 +6,12 @@ schema {
 
 directive @ifAllowed on FIELD
 
+"""
+Indicates that an Input Object is a OneOf Input Object (and thus requires
+                        exactly one of its field be provided)
+"""
+directive @oneOf on INPUT_OBJECT
+
 enum Action {
   ADD_COMPETITION_MEMBER
   ADD_EVENT_COMPETITION
@@ -15,6 +21,7 @@ enum Action {
   CREATE_COMPETITION
   CREATE_COMPETITION_RULE_AGREEMENT
   CREATE_EVENT
+  CREATE_EVENT_RULE_AGREEMENT
   CREATE_FORUM
   CREATE_ORGANIZATION
   CREATE_PROJECT_VERSION_APPROVAL
@@ -34,7 +41,10 @@ enum Action {
   DELETE_TOPIC
   DELETE_USER
   FETCH_WEBSITE_METADATA
+  JOIN_COMPETITION
+  JOIN_EVENT
   PUBLISH_VOTE
+  READ_ACTIVITY_TRACKER
   READ_COMMENT
   READ_COMPETITION
   READ_COMPETITION_MEMBERSHIP
@@ -43,6 +53,8 @@ enum Action {
   READ_EVENT
   READ_EVENT_COMPETITION
   READ_EVENT_MEMBERSHIP
+  READ_EVENT_RULE
+  READ_EVENT_RULE_AGREEMENT
   READ_PROJECT_VERSION
   READ_PROJECT_VERSION_APPROVAL
   READ_PROJECT_VERSION_EVALUATION
@@ -74,6 +86,38 @@ enum Action {
   UPLOAD_FILES
 }
 
+type Activity {
+  date: NaiveDate!
+  level: Int!
+  points: Int!
+}
+
+type ActivityConnection {
+  """A list of edges."""
+  edges: [ActivityEdge!]!
+  """A list of nodes."""
+  nodes: [Activity!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type ActivityEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: Activity!
+}
+
+enum ActivityVisibility {
+  """Activity is visible by every authenticated user."""
+  AUTHENTICATED
+  """Activity is only visible to invited members."""
+  MEMBERS
+  """Activity is visible by everyone, even unauthenticated users."""
+  UNAUTHENTICATED
+}
+
 enum ArchiveKind {
   TAR
   ZIP
@@ -86,6 +130,16 @@ enum Badge {
   CHICAGO_2023
   """Quantum Hackathon by QuantX, October 2022, Grenoble (FR)"""
   GRENOBLE_2022
+  """Clinical Trial Optimization Competition 2024 by Ingenii First Prize"""
+  INGENII_2024_FIRST
+  """Clinical Trial Optimization Competition 2024 by Ingenii Participant"""
+  INGENII_2024_OTHERS
+  """Clinical Trial Optimization Competition 2024 by Ingenii Second Prize"""
+  INGENII_2024_SECOND
+  """Clinical Trial Optimization Competition 2024 by Ingenii Special Prize"""
+  INGENII_2024_SPECIAL
+  """Clinical Trial Optimization Competition 2024 by Ingenii Third Prize"""
+  INGENII_2024_THIRD
   """Quantum Hackathon by Québec Quantique & QuantX, June 2022, Montreal (CAN)"""
   MONTREAL_2022
   """Quantum hackathon by QuantX, March 2021, Paris (FR)"""
@@ -136,30 +190,33 @@ type CommentEdge {
   node: Comment!
 }
 
-type Competition implements ForumOwner & Node & Subscribable {
+type Competition implements ForumOwner & Node {
   banner: Url
   createdAt: DateTime!
   description: String
-  entityRuleAgreements(after: String, before: String, entity: UsernameOrID, first: Int, last: Int): CompetitionRuleAgreementConnection!
-  entitySubscription(entity: UsernameOrID): SubjectSubscription
+  entityRuleAgreements(after: String, before: String, entity: UsernameOrID, first: Int, last: Int, latest: Boolean): CompetitionRuleAgreementConnection!
   forum: Forum!
+  hasLeaderboard: Boolean!
   host: Entity!
   id: ID!
   isPrivate: Boolean!
   latestRule: CompetitionRule!
   leaderboard(after: String, before: String, first: Int, last: Int): ProjectVersionEvaluationConnection!
+  leaderboardSize: Int!
   members(after: String, before: String, first: Int, last: Int): CompetitionMembershipConnection!
+  membership(entity: UsernameOrID): CompetitionMembership
   requiresApproval: Boolean!
   rules(after: String, before: String, first: Int, last: Int): CompetitionRuleConnection!
   shortDescription: String!
   slug: String!
   submission(entity: UsernameOrID): Submission
   submissions(after: String, before: String, entityId: ID, first: Int, last: Int, needsApproval: Boolean): SubmissionConnection!
-  tags(after: String, before: String, first: Int, last: Int): TagConnection!
+  tags(after: String, before: String, first: Int, last: Int): CompetitionTagConnection!
   thumbnail: Url
   title: String!
   useCase: UseCase!
   viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+  visibility: ActivityVisibility!
 }
 
 type CompetitionConnection {
@@ -184,6 +241,7 @@ type CompetitionMembership implements Node {
   entity: Entity!
   id: ID!
   kind: CompetitionMembershipKind!
+  ruleAgreements(after: String, before: String, first: Int, last: Int, latest: Boolean): CompetitionRuleAgreementConnection!
   viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
 }
 
@@ -258,14 +316,13 @@ type CompetitionRuleEdge {
   node: CompetitionRule!
 }
 
-type CompetitionSubscription implements Node & SubjectSubscription {
-  competition: Competition!
-  createdAt: DateTime!
-  entity: Entity!
-  id: ID!
-  kind: SubjectKind!
-  subject: Subscribable!
-  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+type CompetitionTagConnection {
+  """A list of edges."""
+  edges: [TagEdge!]!
+  """A list of nodes."""
+  nodes: [Tag!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
 }
 
 input CreateCommentInput {
@@ -275,23 +332,24 @@ input CreateCommentInput {
 input CreateCompetitionInput {
   banner: Upload
   description: String
-  isPrivate: Boolean!
+  hasLeaderboard: Boolean
   requiresApproval: Boolean
   shortDescription: String!
   slug: String!
   tagIds: [ID]
   thumbnail: Upload
   title: String!
+  visibility: ActivityVisibility! = UNAUTHENTICATED
 }
 
 input CreateEventInput {
   banner: Upload
   description: String
-  isPrivate: Boolean!
   shortDescription: String!
   slug: String!
   thumbnail: Upload
   title: String!
+  visibility: ActivityVisibility! = UNAUTHENTICATED
 }
 
 input CreateForumInput {
@@ -359,12 +417,20 @@ interface Entity {
   kind: EntityKind!
   linkedin: String
   location: String
+  points: Int!
   projectVersionApprovals(after: String, before: String, first: Int, last: Int, projectVersionId: UUID): ProjectVersionApprovalConnection!
+  rank: Int!
   subjectSubscriptions(after: String, before: String, first: Int, kinds: [SubjectKind!], last: Int): SubjectSubscriptionConnection!
   submissions(after: String, before: String, competitionId: ID, first: Int, last: Int): SubmissionConnection!
   username: String!
   viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
   website: String
+}
+
+enum EntityActivitiesConnectionKind {
+  COMMENT
+  SUBMISSION
+  TOPIC
 }
 
 type EntityBadge implements Node {
@@ -424,16 +490,21 @@ type Event implements ForumOwner & Node {
   competitions(after: String, before: String, first: Int, last: Int): EventCompetitionConnection!
   createdAt: DateTime!
   description: String
+  entityRuleAgreements(after: String, before: String, entity: UsernameOrID, first: Int, last: Int, latest: Boolean): EventRuleAgreementConnection!
   forum: Forum!
   host: Entity!
   id: ID!
   isPrivate: Boolean!
+  latestRule: EventRule!
   members(after: String, before: String, first: Int, last: Int, userIsOrgMember: ID): EventMembershipConnection!
+  membership(entity: UsernameOrID): EventMembership
+  rules(after: String, before: String, first: Int, last: Int): EventRuleConnection!
   shortDescription: String!
   slug: String!
   thumbnail: Url
   title: String!
   viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+  visibility: ActivityVisibility!
 }
 
 type EventCompetition implements Node {
@@ -482,6 +553,7 @@ type EventMembership implements Node {
   event: Event!
   id: ID!
   kind: EventMembershipKind!
+  ruleAgreements(after: String, before: String, first: Int, last: Int, latest: Boolean): EventRuleAgreementConnection!
   viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
 }
 
@@ -505,6 +577,55 @@ type EventMembershipEdge {
 enum EventMembershipKind {
   HOST
   PARTICIPANT
+}
+
+type EventRule implements Node {
+  createdAt: DateTime!
+  entityAgreement(entity: UsernameOrID): EventRuleAgreement
+  event: Event!
+  id: ID!
+  text: String!
+}
+
+type EventRuleAgreement implements Node {
+  createdAt: DateTime!
+  entity: Entity!
+  eventRule: EventRule!
+  id: ID!
+}
+
+type EventRuleAgreementConnection {
+  """A list of edges."""
+  edges: [EventRuleAgreementEdge!]!
+  """A list of nodes."""
+  nodes: [EventRuleAgreement!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type EventRuleAgreementEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: EventRuleAgreement!
+}
+
+type EventRuleConnection {
+  """A list of edges."""
+  edges: [EventRuleEdge!]!
+  """A list of nodes."""
+  nodes: [EventRule!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type EventRuleEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: EventRule!
 }
 
 type FileBrowser {
@@ -618,6 +739,25 @@ type ForumSubscription implements Node & SubjectSubscription {
   viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
 }
 
+type GlobalLeaderboardConnection {
+  """A list of edges."""
+  edges: [GlobalLeaderboardEdge!]!
+  """A list of nodes."""
+  nodes: [Entity!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type GlobalLeaderboardEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: Entity!
+  points: Int!
+  rank: Int!
+}
+
 type InitUploadFile {
   key: String!
   uploadUrl: Url!
@@ -642,6 +782,7 @@ type Mutation {
   addEventCompetition(competitionId: ID!, eventId: ID!): EventCompetitionEdge!
   addEventMember(entityId: ID!, eventId: ID!): EventMembershipEdge!
   agreeToCompetitionRule(asEntity: UsernameOrID, competition: ID!): CompetitionRuleAgreement!
+  agreeToEventRule(asEntity: UsernameOrID, event: ID!): EventRuleAgreement!
   awardBadge(badge: Badge!, entityId: ID!): EntityBadgeEdge!
   completeProjectVersionFileMultipartUpload(eTags: [String!]!, id: ID!, uploadId: String!): ProjectVersionFile!
   createCommentForComment(commentId: ID!, input: CreateCommentInput!): CommentEdge!
@@ -669,6 +810,8 @@ type Mutation {
   fetchWebsiteMetadata(url: Url!): WebsiteMetadata!
   finishUploadFile(input: FinishUploadFileInput!): FinishUploadFile!
   initUploadFile(input: InitUploadFileInput!): InitUploadFile!
+  joinCompetition(asEntity: UsernameOrID, competitionId: ID!): CompetitionMembershipEdge!
+  joinEvent(asEntity: UsernameOrID, eventId: ID!): EventMembershipEdge!
   loginUser(input: LoginUserInput!): UserEdge!
   logoutUser: Boolean!
   oauth2Authorize(input: Oauth2AuthorizeInput!): Oauth2AuthorizeOutput!
@@ -705,6 +848,17 @@ type Mutation {
   withdrawBadge(id: ID!): ID!
 }
 
+"""
+ISO 8601 calendar date without timezone.
+Format: %Y-%m-%d
+
+# Examples
+
+* `1994-11-13`
+* `2000-02-24`
+"""
+scalar NaiveDate
+
 interface Node {
   id: ID!
 }
@@ -714,6 +868,7 @@ enum NotificationKind {
   CONTENT_MENTIONED
   CREATE_SUBMISSION
   CREATE_TOPIC
+  REPLY_COMMENT
   REPLY_TOPIC
 }
 
@@ -765,12 +920,14 @@ type Organization implements Entity & Node {
   kind: EntityKind!
   linkedin: String
   location: String
+  points: Int!
   projectVersionApprovals(after: String, before: String, first: Int, last: Int, projectVersionId: UUID): ProjectVersionApprovalConnection!
+  rank: Int!
   subjectSubscriptions(after: String, before: String, first: Int, kinds: [SubjectKind!], last: Int): SubjectSubscriptionConnection!
   submissions(after: String, before: String, competitionId: ID, first: Int, last: Int): SubmissionConnection!
   userMembership(user: UsernameOrID): OrganizationMembership
   username: String!
-  users(after: String, before: String, first: Int, last: Int): OrganizationMembershipConnection!
+  users(after: String, before: String, first: Int, last: Int): OrganizationUserConnection!
   viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
   website: String
 }
@@ -791,15 +948,6 @@ type OrganizationMembership implements Node {
   viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
 }
 
-type OrganizationMembershipConnection {
-  """A list of edges."""
-  edges: [OrganizationMembershipEdge!]!
-  """A list of nodes."""
-  nodes: [OrganizationMembership!]!
-  """Information to aid in pagination."""
-  pageInfo: PageInfo!
-}
-
 """An edge in a connection."""
 type OrganizationMembershipEdge {
   """A cursor for use in pagination"""
@@ -813,6 +961,15 @@ enum OrganizationMembershipKind {
   EDITOR
   OWNER
   READER
+}
+
+type OrganizationUserConnection {
+  """A list of edges."""
+  edges: [OrganizationMembershipEdge!]!
+  """A list of nodes."""
+  nodes: [OrganizationMembership!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
 }
 
 """Information about pagination in a connection"""
@@ -888,6 +1045,11 @@ type ProjectVersionApprovalEdge {
   node: ProjectVersionApproval!
 }
 
+enum ProjectVersionCompressor {
+  GZIP
+  ZSTANDARD
+}
+
 type ProjectVersionConnection {
   """A list of edges."""
   edges: [ProjectVersionEdge!]!
@@ -912,7 +1074,9 @@ type ProjectVersionEvaluation implements Node {
   id: ID!
   latest: Boolean!
   max: Boolean!
+  points: Int!
   projectVersion: ProjectVersion!
+  rank: Int
   score: Float
   submission: Submission!
   viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
@@ -938,6 +1102,7 @@ type ProjectVersionEvaluationEdge {
 type ProjectVersionFile implements Node {
   browse: FileBrowser!
   downloadUrl(archKind: ArchiveKind! = TAR): Url!
+  extension: String
   id: ID!
   kind: ProjectVersionFileKind!
   projectVersion: ProjectVersion!
@@ -969,6 +1134,7 @@ type Query {
   events(after: String, before: String, first: Int, last: Int, search: String): EventConnection!
   forumBySlug(slug: String!): Forum
   forums(after: String, before: String, first: Int, last: Int, search: String): ForumConnection!
+  leaderboard(after: String, before: String, first: Int, kinds: [EntityKind!], last: Int, search: String): GlobalLeaderboardConnection!
   node(id: ID!): Node!
   tags(after: String, before: String, first: Int, last: Int): TagConnection!
   version: Version!
@@ -996,7 +1162,6 @@ input SignupUserInput {
 }
 
 enum SubjectKind {
-  COMPETITION
   FORUM
   TOPIC
 }
@@ -1067,6 +1232,7 @@ type Subscription {
   newComments(topicId: ID): CommentEdge!
   projectVersionStatusUpdate(competitionId: ID, entityId: ID, projectId: ID, projectVersionId: ID): ProjectVersion!
   updatedComments(topicId: ID): CommentEdge!
+  updatedEntity(id: ID): Entity!
 }
 
 type Tag implements Node {
@@ -1159,7 +1325,7 @@ input UpdateCommentInput {
 input UpdateCompetitionInput {
   banner: Upload
   description: String
-  isPrivate: Boolean
+  hasLeaderboard: Boolean
   requiresApproval: Boolean
   rules: String
   shortDescription: String
@@ -1167,16 +1333,18 @@ input UpdateCompetitionInput {
   tagIds: [ID]
   thumbnail: Upload
   title: String
+  visibility: ActivityVisibility
 }
 
 input UpdateEventInput {
   banner: Upload
   description: String
-  isPrivate: Boolean
+  rules: String
   shortDescription: String
   slug: String
   thumbnail: Upload
   title: String
+  visibility: ActivityVisibility
 }
 
 input UpdateForumInput {
@@ -1194,6 +1362,7 @@ input UpdateOrganizationInput {
   displayName: String
   github: String
   image: Upload
+  inQuantumJob: Boolean
   linkedin: String
   location: String
   username: String
@@ -1201,6 +1370,7 @@ input UpdateOrganizationInput {
 }
 
 input UpdateSubmissionInput {
+  compression: ProjectVersionCompressor
   pyprojectToml: String!
   readme: String
 }
@@ -1211,6 +1381,7 @@ input UpdateTopicInput {
 }
 
 input UpdateUseCaseInput {
+  compression: ProjectVersionCompressor
   pyprojectToml: String!
   readme: String
 }
@@ -1221,6 +1392,7 @@ input UpdateUserInput {
   email: String
   github: String
   image: Upload
+  inQuantumJob: Boolean
   jobTitle: String
   linkedin: String
   location: String
@@ -1247,6 +1419,7 @@ type UseCase implements Node & Project {
 }
 
 type User implements Entity & Node {
+  activities(after: String, before: String, first: Int, kinds: [EntityActivitiesConnectionKind!], last: Int): ActivityConnection!
   badges(after: String, before: String, first: Int, last: Int): EntityBadgeConnection!
   bio: String
   """can this user perform the action on the given resource"""
@@ -1255,19 +1428,24 @@ type User implements Entity & Node {
   createdAt: DateTime!
   displayName: String!
   email: String!
-  entities(after: String, before: String, first: Int, last: Int, permission: Permission, search: String): EntityConnection!
+  entities(after: String, before: String, first: Int, last: Int, permission: Permission, search: String): UserEntitiesConnection!
   github: String
   id: ID!
   image: Url
   imageThumbnail: Url
+  isAvailableOnQuantumJobs: Boolean!
+  jobBoardProfileLink: Url
   jobTitle: String
+  karma: Int!
   kind: EntityKind!
   linkedin: String
   location: String
   notifications: UserNotifications!
   organization: String
-  organizations(after: String, before: String, first: Int, last: Int): OrganizationMembershipConnection!
+  organizations(after: String, before: String, first: Int, last: Int): UserOrganizationConnection!
+  points: Int!
   projectVersionApprovals(after: String, before: String, first: Int, last: Int, projectVersionId: UUID): ProjectVersionApprovalConnection!
+  rank: Int!
   subjectSubscriptions(after: String, before: String, first: Int, kinds: [SubjectKind!], last: Int): SubjectSubscriptionConnection!
   submissions(after: String, before: String, competitionId: ID, first: Int, last: Int): SubmissionConnection!
   topics(after: String, before: String, first: Int, last: Int, order: VotableOrder): TopicConnection!
@@ -1284,9 +1462,27 @@ type UserEdge {
   node: User!
 }
 
+type UserEntitiesConnection {
+  """A list of edges."""
+  edges: [EntityEdge!]!
+  """A list of nodes."""
+  nodes: [Entity!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
 type UserNotifications {
   disabled: [NotificationKind!]!
   enabled: [NotificationKind!]!
+}
+
+type UserOrganizationConnection {
+  """A list of edges."""
+  edges: [OrganizationMembershipEdge!]!
+  """A list of nodes."""
+  nodes: [OrganizationMembership!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
 }
 
 scalar UsernameOrID

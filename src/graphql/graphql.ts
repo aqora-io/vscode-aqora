@@ -22,6 +22,16 @@ export type Scalars = {
   DateTime: { input: Date; output: Date; }
   /** A scalar that can represent any JSON value. */
   JSON: { input: { [key: string]: any }; output: { [key: string]: any }; }
+  /**
+   * ISO 8601 calendar date without timezone.
+   * Format: %Y-%m-%d
+   *
+   * # Examples
+   *
+   * * `1994-11-13`
+   * * `2000-02-24`
+   */
+  NaiveDate: { input: Date; output: Date; }
   Semver: { input: `${number}.${number}.${number}` | `${number}.${number}.${number}-${string}` | `${number}.${number}.${number}+${string}` | `${number}.${number}.${number}-${string}+${string}`; output: `${number}.${number}.${number}` | `${number}.${number}.${number}-${string}` | `${number}.${number}.${number}+${string}` | `${number}.${number}.${number}-${string}+${string}`; }
   /**
    * A UUID is a unique 128-bit number, stored as 16 octets. UUIDs are parsed as
@@ -49,6 +59,7 @@ export type Action =
   | 'CREATE_COMPETITION'
   | 'CREATE_COMPETITION_RULE_AGREEMENT'
   | 'CREATE_EVENT'
+  | 'CREATE_EVENT_RULE_AGREEMENT'
   | 'CREATE_FORUM'
   | 'CREATE_ORGANIZATION'
   | 'CREATE_PROJECT_VERSION_APPROVAL'
@@ -68,7 +79,10 @@ export type Action =
   | 'DELETE_TOPIC'
   | 'DELETE_USER'
   | 'FETCH_WEBSITE_METADATA'
+  | 'JOIN_COMPETITION'
+  | 'JOIN_EVENT'
   | 'PUBLISH_VOTE'
+  | 'READ_ACTIVITY_TRACKER'
   | 'READ_COMMENT'
   | 'READ_COMPETITION'
   | 'READ_COMPETITION_MEMBERSHIP'
@@ -77,6 +91,8 @@ export type Action =
   | 'READ_EVENT'
   | 'READ_EVENT_COMPETITION'
   | 'READ_EVENT_MEMBERSHIP'
+  | 'READ_EVENT_RULE'
+  | 'READ_EVENT_RULE_AGREEMENT'
   | 'READ_PROJECT_VERSION'
   | 'READ_PROJECT_VERSION_APPROVAL'
   | 'READ_PROJECT_VERSION_EVALUATION'
@@ -108,6 +124,41 @@ export type Action =
   | 'UPLOAD_FILES'
   | '%future added value';
 
+export type Activity = {
+  __typename?: 'Activity';
+  date: Scalars['NaiveDate']['output'];
+  level: Scalars['Int']['output'];
+  points: Scalars['Int']['output'];
+};
+
+export type ActivityConnection = {
+  __typename?: 'ActivityConnection';
+  /** A list of edges. */
+  edges: Array<ActivityEdge>;
+  /** A list of nodes. */
+  nodes: Array<Activity>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+};
+
+/** An edge in a connection. */
+export type ActivityEdge = {
+  __typename?: 'ActivityEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: Activity;
+};
+
+export type ActivityVisibility =
+  /** Activity is visible by every authenticated user. */
+  | 'AUTHENTICATED'
+  /** Activity is only visible to invited members. */
+  | 'MEMBERS'
+  /** Activity is visible by everyone, even unauthenticated users. */
+  | 'UNAUTHENTICATED'
+  | '%future added value';
+
 export type ArchiveKind =
   | 'TAR'
   | 'ZIP'
@@ -120,6 +171,16 @@ export type Badge =
   | 'CHICAGO_2023'
   /** Quantum Hackathon by QuantX, October 2022, Grenoble (FR) */
   | 'GRENOBLE_2022'
+  /** Clinical Trial Optimization Competition 2024 by Ingenii First Prize */
+  | 'INGENII_2024_FIRST'
+  /** Clinical Trial Optimization Competition 2024 by Ingenii Participant */
+  | 'INGENII_2024_OTHERS'
+  /** Clinical Trial Optimization Competition 2024 by Ingenii Second Prize */
+  | 'INGENII_2024_SECOND'
+  /** Clinical Trial Optimization Competition 2024 by Ingenii Special Prize */
+  | 'INGENII_2024_SPECIAL'
+  /** Clinical Trial Optimization Competition 2024 by Ingenii Third Prize */
+  | 'INGENII_2024_THIRD'
   /** Quantum Hackathon by Québec Quantique & QuantX, June 2022, Montreal (CAN) */
   | 'MONTREAL_2022'
   /** Quantum hackathon by QuantX, March 2021, Paris (FR) */
@@ -188,31 +249,34 @@ export type CommentEdge = {
   node: Comment;
 };
 
-export type Competition = ForumOwner & Node & Subscribable & {
+export type Competition = ForumOwner & Node & {
   __typename?: 'Competition';
   banner: Maybe<Scalars['Url']['output']>;
   createdAt: Scalars['DateTime']['output'];
   description: Maybe<Scalars['String']['output']>;
   entityRuleAgreements: CompetitionRuleAgreementConnection;
-  entitySubscription: Maybe<SubjectSubscription>;
   forum: Forum;
+  hasLeaderboard: Scalars['Boolean']['output'];
   host: Entity;
   id: Scalars['ID']['output'];
   isPrivate: Scalars['Boolean']['output'];
   latestRule: CompetitionRule;
   leaderboard: ProjectVersionEvaluationConnection;
+  leaderboardSize: Scalars['Int']['output'];
   members: CompetitionMembershipConnection;
+  membership: Maybe<CompetitionMembership>;
   requiresApproval: Scalars['Boolean']['output'];
   rules: CompetitionRuleConnection;
   shortDescription: Scalars['String']['output'];
   slug: Scalars['String']['output'];
   submission: Maybe<Submission>;
   submissions: SubmissionConnection;
-  tags: TagConnection;
+  tags: CompetitionTagConnection;
   thumbnail: Maybe<Scalars['Url']['output']>;
   title: Scalars['String']['output'];
   useCase: UseCase;
   viewerCan: Scalars['Boolean']['output'];
+  visibility: ActivityVisibility;
 };
 
 
@@ -222,11 +286,7 @@ export type CompetitionEntityRuleAgreementsArgs = {
   entity: InputMaybe<Scalars['UsernameOrID']['input']>;
   first: InputMaybe<Scalars['Int']['input']>;
   last: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type CompetitionEntitySubscriptionArgs = {
-  entity: InputMaybe<Scalars['UsernameOrID']['input']>;
+  latest: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 
@@ -243,6 +303,11 @@ export type CompetitionMembersArgs = {
   before: InputMaybe<Scalars['String']['input']>;
   first: InputMaybe<Scalars['Int']['input']>;
   last: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type CompetitionMembershipArgs = {
+  entity: InputMaybe<Scalars['UsernameOrID']['input']>;
 };
 
 
@@ -307,7 +372,17 @@ export type CompetitionMembership = Node & {
   entity: Entity;
   id: Scalars['ID']['output'];
   kind: CompetitionMembershipKind;
+  ruleAgreements: CompetitionRuleAgreementConnection;
   viewerCan: Scalars['Boolean']['output'];
+};
+
+
+export type CompetitionMembershipRuleAgreementsArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
+  latest: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 
@@ -400,21 +475,14 @@ export type CompetitionRuleEdge = {
   node: CompetitionRule;
 };
 
-export type CompetitionSubscription = Node & SubjectSubscription & {
-  __typename?: 'CompetitionSubscription';
-  competition: Competition;
-  createdAt: Scalars['DateTime']['output'];
-  entity: Entity;
-  id: Scalars['ID']['output'];
-  kind: SubjectKind;
-  subject: Subscribable;
-  viewerCan: Scalars['Boolean']['output'];
-};
-
-
-export type CompetitionSubscriptionViewerCanArgs = {
-  action: Action;
-  asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+export type CompetitionTagConnection = {
+  __typename?: 'CompetitionTagConnection';
+  /** A list of edges. */
+  edges: Array<TagEdge>;
+  /** A list of nodes. */
+  nodes: Array<Tag>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
 };
 
 export type CreateCommentInput = {
@@ -424,23 +492,24 @@ export type CreateCommentInput = {
 export type CreateCompetitionInput = {
   banner: InputMaybe<Scalars['Upload']['input']>;
   description: InputMaybe<Scalars['String']['input']>;
-  isPrivate: Scalars['Boolean']['input'];
+  hasLeaderboard: InputMaybe<Scalars['Boolean']['input']>;
   requiresApproval: InputMaybe<Scalars['Boolean']['input']>;
   shortDescription: Scalars['String']['input'];
   slug: Scalars['String']['input'];
   tagIds: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
   thumbnail: InputMaybe<Scalars['Upload']['input']>;
   title: Scalars['String']['input'];
+  visibility: ActivityVisibility;
 };
 
 export type CreateEventInput = {
   banner: InputMaybe<Scalars['Upload']['input']>;
   description: InputMaybe<Scalars['String']['input']>;
-  isPrivate: Scalars['Boolean']['input'];
   shortDescription: Scalars['String']['input'];
   slug: Scalars['String']['input'];
   thumbnail: InputMaybe<Scalars['Upload']['input']>;
   title: Scalars['String']['input'];
+  visibility: ActivityVisibility;
 };
 
 export type CreateForumInput = {
@@ -503,7 +572,9 @@ export type Entity = {
   kind: EntityKind;
   linkedin: Maybe<Scalars['String']['output']>;
   location: Maybe<Scalars['String']['output']>;
+  points: Scalars['Int']['output'];
   projectVersionApprovals: ProjectVersionApprovalConnection;
+  rank: Scalars['Int']['output'];
   subjectSubscriptions: SubjectSubscriptionConnection;
   submissions: SubmissionConnection;
   username: Scalars['String']['output'];
@@ -551,6 +622,12 @@ export type EntityViewerCanArgs = {
   action: Action;
   asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
 };
+
+export type EntityActivitiesConnectionKind =
+  | 'COMMENT'
+  | 'SUBMISSION'
+  | 'TOPIC'
+  | '%future added value';
 
 export type EntityBadge = Node & {
   __typename?: 'EntityBadge';
@@ -616,16 +693,21 @@ export type Event = ForumOwner & Node & {
   competitions: EventCompetitionConnection;
   createdAt: Scalars['DateTime']['output'];
   description: Maybe<Scalars['String']['output']>;
+  entityRuleAgreements: EventRuleAgreementConnection;
   forum: Forum;
   host: Entity;
   id: Scalars['ID']['output'];
   isPrivate: Scalars['Boolean']['output'];
+  latestRule: EventRule;
   members: EventMembershipConnection;
+  membership: Maybe<EventMembership>;
+  rules: EventRuleConnection;
   shortDescription: Scalars['String']['output'];
   slug: Scalars['String']['output'];
   thumbnail: Maybe<Scalars['Url']['output']>;
   title: Scalars['String']['output'];
   viewerCan: Scalars['Boolean']['output'];
+  visibility: ActivityVisibility;
 };
 
 
@@ -637,12 +719,35 @@ export type EventCompetitionsArgs = {
 };
 
 
+export type EventEntityRuleAgreementsArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  entity: InputMaybe<Scalars['UsernameOrID']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
+  latest: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+
 export type EventMembersArgs = {
   after: InputMaybe<Scalars['String']['input']>;
   before: InputMaybe<Scalars['String']['input']>;
   first: InputMaybe<Scalars['Int']['input']>;
   last: InputMaybe<Scalars['Int']['input']>;
   userIsOrgMember: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type EventMembershipArgs = {
+  entity: InputMaybe<Scalars['UsernameOrID']['input']>;
+};
+
+
+export type EventRulesArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -709,7 +814,17 @@ export type EventMembership = Node & {
   event: Event;
   id: Scalars['ID']['output'];
   kind: EventMembershipKind;
+  ruleAgreements: EventRuleAgreementConnection;
   viewerCan: Scalars['Boolean']['output'];
+};
+
+
+export type EventMembershipRuleAgreementsArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
+  latest: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 
@@ -741,6 +856,66 @@ export type EventMembershipKind =
   | 'HOST'
   | 'PARTICIPANT'
   | '%future added value';
+
+export type EventRule = Node & {
+  __typename?: 'EventRule';
+  createdAt: Scalars['DateTime']['output'];
+  entityAgreement: Maybe<EventRuleAgreement>;
+  event: Event;
+  id: Scalars['ID']['output'];
+  text: Scalars['String']['output'];
+};
+
+
+export type EventRuleEntityAgreementArgs = {
+  entity: InputMaybe<Scalars['UsernameOrID']['input']>;
+};
+
+export type EventRuleAgreement = Node & {
+  __typename?: 'EventRuleAgreement';
+  createdAt: Scalars['DateTime']['output'];
+  entity: Entity;
+  eventRule: EventRule;
+  id: Scalars['ID']['output'];
+};
+
+export type EventRuleAgreementConnection = {
+  __typename?: 'EventRuleAgreementConnection';
+  /** A list of edges. */
+  edges: Array<EventRuleAgreementEdge>;
+  /** A list of nodes. */
+  nodes: Array<EventRuleAgreement>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+};
+
+/** An edge in a connection. */
+export type EventRuleAgreementEdge = {
+  __typename?: 'EventRuleAgreementEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: EventRuleAgreement;
+};
+
+export type EventRuleConnection = {
+  __typename?: 'EventRuleConnection';
+  /** A list of edges. */
+  edges: Array<EventRuleEdge>;
+  /** A list of nodes. */
+  nodes: Array<EventRule>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+};
+
+/** An edge in a connection. */
+export type EventRuleEdge = {
+  __typename?: 'EventRuleEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: EventRule;
+};
 
 export type FileBrowser = {
   __typename?: 'FileBrowser';
@@ -907,6 +1082,27 @@ export type ForumSubscriptionViewerCanArgs = {
   asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
 };
 
+export type GlobalLeaderboardConnection = {
+  __typename?: 'GlobalLeaderboardConnection';
+  /** A list of edges. */
+  edges: Array<GlobalLeaderboardEdge>;
+  /** A list of nodes. */
+  nodes: Array<Entity>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+};
+
+/** An edge in a connection. */
+export type GlobalLeaderboardEdge = {
+  __typename?: 'GlobalLeaderboardEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: Entity;
+  points: Scalars['Int']['output'];
+  rank: Scalars['Int']['output'];
+};
+
 export type InitUploadFile = {
   __typename?: 'InitUploadFile';
   key: Scalars['String']['output'];
@@ -930,6 +1126,7 @@ export type Mutation = {
   addEventCompetition: EventCompetitionEdge;
   addEventMember: EventMembershipEdge;
   agreeToCompetitionRule: CompetitionRuleAgreement;
+  agreeToEventRule: EventRuleAgreement;
   awardBadge: EntityBadgeEdge;
   completeProjectVersionFileMultipartUpload: ProjectVersionFile;
   createCommentForComment: CommentEdge;
@@ -957,6 +1154,8 @@ export type Mutation = {
   fetchWebsiteMetadata: WebsiteMetadata;
   finishUploadFile: FinishUploadFile;
   initUploadFile: InitUploadFile;
+  joinCompetition: CompetitionMembershipEdge;
+  joinEvent: EventMembershipEdge;
   loginUser: UserEdge;
   logoutUser: Scalars['Boolean']['output'];
   oauth2Authorize: Oauth2AuthorizeOutput;
@@ -1015,6 +1214,12 @@ export type MutationAddEventMemberArgs = {
 export type MutationAgreeToCompetitionRuleArgs = {
   asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
   competition: Scalars['ID']['input'];
+};
+
+
+export type MutationAgreeToEventRuleArgs = {
+  asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+  event: Scalars['ID']['input'];
 };
 
 
@@ -1162,6 +1367,18 @@ export type MutationFinishUploadFileArgs = {
 
 export type MutationInitUploadFileArgs = {
   input: InitUploadFileInput;
+};
+
+
+export type MutationJoinCompetitionArgs = {
+  asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+  competitionId: Scalars['ID']['input'];
+};
+
+
+export type MutationJoinEventArgs = {
+  asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+  eventId: Scalars['ID']['input'];
 };
 
 
@@ -1350,6 +1567,7 @@ export type NotificationKind =
   | 'CONTENT_MENTIONED'
   | 'CREATE_SUBMISSION'
   | 'CREATE_TOPIC'
+  | 'REPLY_COMMENT'
   | 'REPLY_TOPIC'
   | '%future added value';
 
@@ -1405,12 +1623,14 @@ export type Organization = Entity & Node & {
   kind: EntityKind;
   linkedin: Maybe<Scalars['String']['output']>;
   location: Maybe<Scalars['String']['output']>;
+  points: Scalars['Int']['output'];
   projectVersionApprovals: ProjectVersionApprovalConnection;
+  rank: Scalars['Int']['output'];
   subjectSubscriptions: SubjectSubscriptionConnection;
   submissions: SubmissionConnection;
   userMembership: Maybe<OrganizationMembership>;
   username: Scalars['String']['output'];
-  users: OrganizationMembershipConnection;
+  users: OrganizationUserConnection;
   viewerCan: Scalars['Boolean']['output'];
   website: Maybe<Scalars['String']['output']>;
 };
@@ -1493,16 +1713,6 @@ export type OrganizationMembershipViewerCanArgs = {
   asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
 };
 
-export type OrganizationMembershipConnection = {
-  __typename?: 'OrganizationMembershipConnection';
-  /** A list of edges. */
-  edges: Array<OrganizationMembershipEdge>;
-  /** A list of nodes. */
-  nodes: Array<OrganizationMembership>;
-  /** Information to aid in pagination. */
-  pageInfo: PageInfo;
-};
-
 /** An edge in a connection. */
 export type OrganizationMembershipEdge = {
   __typename?: 'OrganizationMembershipEdge';
@@ -1518,6 +1728,16 @@ export type OrganizationMembershipKind =
   | 'OWNER'
   | 'READER'
   | '%future added value';
+
+export type OrganizationUserConnection = {
+  __typename?: 'OrganizationUserConnection';
+  /** A list of edges. */
+  edges: Array<OrganizationMembershipEdge>;
+  /** A list of nodes. */
+  nodes: Array<OrganizationMembership>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+};
 
 /** Information about pagination in a connection */
 export type PageInfo = {
@@ -1646,6 +1866,11 @@ export type ProjectVersionApprovalEdge = {
   node: ProjectVersionApproval;
 };
 
+export type ProjectVersionCompressor =
+  | 'GZIP'
+  | 'ZSTANDARD'
+  | '%future added value';
+
 export type ProjectVersionConnection = {
   __typename?: 'ProjectVersionConnection';
   /** A list of edges. */
@@ -1673,7 +1898,9 @@ export type ProjectVersionEvaluation = Node & {
   id: Scalars['ID']['output'];
   latest: Scalars['Boolean']['output'];
   max: Scalars['Boolean']['output'];
+  points: Scalars['Int']['output'];
   projectVersion: ProjectVersion;
+  rank: Maybe<Scalars['Int']['output']>;
   score: Maybe<Scalars['Float']['output']>;
   submission: Submission;
   viewerCan: Scalars['Boolean']['output'];
@@ -1708,6 +1935,7 @@ export type ProjectVersionFile = Node & {
   __typename?: 'ProjectVersionFile';
   browse: FileBrowser;
   downloadUrl: Scalars['Url']['output'];
+  extension: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   kind: ProjectVersionFileKind;
   projectVersion: ProjectVersion;
@@ -1751,6 +1979,7 @@ export type Query = {
   events: EventConnection;
   forumBySlug: Maybe<Forum>;
   forums: ForumConnection;
+  leaderboard: GlobalLeaderboardConnection;
   node: Node;
   tags: TagConnection;
   version: Version;
@@ -1815,6 +2044,16 @@ export type QueryForumsArgs = {
 };
 
 
+export type QueryLeaderboardArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  kinds: InputMaybe<Array<EntityKind>>;
+  last: InputMaybe<Scalars['Int']['input']>;
+  search: InputMaybe<Scalars['String']['input']>;
+};
+
+
 export type QueryNodeArgs = {
   id: Scalars['ID']['input'];
 };
@@ -1846,7 +2085,6 @@ export type SignupUserInput = {
 };
 
 export type SubjectKind =
-  | 'COMPETITION'
   | 'FORUM'
   | 'TOPIC'
   | '%future added value';
@@ -1959,6 +2197,7 @@ export type Subscription = {
   newComments: CommentEdge;
   projectVersionStatusUpdate: ProjectVersion;
   updatedComments: CommentEdge;
+  updatedEntity: Entity;
 };
 
 
@@ -1982,6 +2221,11 @@ export type SubscriptionProjectVersionStatusUpdateArgs = {
 
 export type SubscriptionUpdatedCommentsArgs = {
   topicId: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type SubscriptionUpdatedEntityArgs = {
+  id: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type Tag = Node & {
@@ -2101,7 +2345,7 @@ export type UpdateCommentInput = {
 export type UpdateCompetitionInput = {
   banner: InputMaybe<Scalars['Upload']['input']>;
   description: InputMaybe<Scalars['String']['input']>;
-  isPrivate: InputMaybe<Scalars['Boolean']['input']>;
+  hasLeaderboard: InputMaybe<Scalars['Boolean']['input']>;
   requiresApproval: InputMaybe<Scalars['Boolean']['input']>;
   rules: InputMaybe<Scalars['String']['input']>;
   shortDescription: InputMaybe<Scalars['String']['input']>;
@@ -2109,16 +2353,18 @@ export type UpdateCompetitionInput = {
   tagIds: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
   thumbnail: InputMaybe<Scalars['Upload']['input']>;
   title: InputMaybe<Scalars['String']['input']>;
+  visibility: InputMaybe<ActivityVisibility>;
 };
 
 export type UpdateEventInput = {
   banner: InputMaybe<Scalars['Upload']['input']>;
   description: InputMaybe<Scalars['String']['input']>;
-  isPrivate: InputMaybe<Scalars['Boolean']['input']>;
+  rules: InputMaybe<Scalars['String']['input']>;
   shortDescription: InputMaybe<Scalars['String']['input']>;
   slug: InputMaybe<Scalars['String']['input']>;
   thumbnail: InputMaybe<Scalars['Upload']['input']>;
   title: InputMaybe<Scalars['String']['input']>;
+  visibility: InputMaybe<ActivityVisibility>;
 };
 
 export type UpdateForumInput = {
@@ -2136,6 +2382,7 @@ export type UpdateOrganizationInput = {
   displayName: InputMaybe<Scalars['String']['input']>;
   github: InputMaybe<Scalars['String']['input']>;
   image: InputMaybe<Scalars['Upload']['input']>;
+  inQuantumJob: InputMaybe<Scalars['Boolean']['input']>;
   linkedin: InputMaybe<Scalars['String']['input']>;
   location: InputMaybe<Scalars['String']['input']>;
   username: InputMaybe<Scalars['String']['input']>;
@@ -2143,6 +2390,7 @@ export type UpdateOrganizationInput = {
 };
 
 export type UpdateSubmissionInput = {
+  compression: InputMaybe<ProjectVersionCompressor>;
   pyprojectToml: Scalars['String']['input'];
   readme: InputMaybe<Scalars['String']['input']>;
 };
@@ -2153,6 +2401,7 @@ export type UpdateTopicInput = {
 };
 
 export type UpdateUseCaseInput = {
+  compression: InputMaybe<ProjectVersionCompressor>;
   pyprojectToml: Scalars['String']['input'];
   readme: InputMaybe<Scalars['String']['input']>;
 };
@@ -2163,6 +2412,7 @@ export type UpdateUserInput = {
   email: InputMaybe<Scalars['String']['input']>;
   github: InputMaybe<Scalars['String']['input']>;
   image: InputMaybe<Scalars['Upload']['input']>;
+  inQuantumJob: InputMaybe<Scalars['Boolean']['input']>;
   jobTitle: InputMaybe<Scalars['String']['input']>;
   linkedin: InputMaybe<Scalars['String']['input']>;
   location: InputMaybe<Scalars['String']['input']>;
@@ -2205,6 +2455,7 @@ export type UseCaseViewerCanArgs = {
 
 export type User = Entity & Node & {
   __typename?: 'User';
+  activities: ActivityConnection;
   badges: EntityBadgeConnection;
   bio: Maybe<Scalars['String']['output']>;
   /** can this user perform the action on the given resource */
@@ -2213,25 +2464,39 @@ export type User = Entity & Node & {
   createdAt: Scalars['DateTime']['output'];
   displayName: Scalars['String']['output'];
   email: Scalars['String']['output'];
-  entities: EntityConnection;
+  entities: UserEntitiesConnection;
   github: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   image: Maybe<Scalars['Url']['output']>;
   imageThumbnail: Maybe<Scalars['Url']['output']>;
+  isAvailableOnQuantumJobs: Scalars['Boolean']['output'];
+  jobBoardProfileLink: Maybe<Scalars['Url']['output']>;
   jobTitle: Maybe<Scalars['String']['output']>;
+  karma: Scalars['Int']['output'];
   kind: EntityKind;
   linkedin: Maybe<Scalars['String']['output']>;
   location: Maybe<Scalars['String']['output']>;
   notifications: UserNotifications;
   organization: Maybe<Scalars['String']['output']>;
-  organizations: OrganizationMembershipConnection;
+  organizations: UserOrganizationConnection;
+  points: Scalars['Int']['output'];
   projectVersionApprovals: ProjectVersionApprovalConnection;
+  rank: Scalars['Int']['output'];
   subjectSubscriptions: SubjectSubscriptionConnection;
   submissions: SubmissionConnection;
   topics: TopicConnection;
   username: Scalars['String']['output'];
   viewerCan: Scalars['Boolean']['output'];
   website: Maybe<Scalars['String']['output']>;
+};
+
+
+export type UserActivitiesArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  kinds: InputMaybe<Array<EntityActivitiesConnectionKind>>;
+  last: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -2327,10 +2592,30 @@ export type UserEdge = {
   node: User;
 };
 
+export type UserEntitiesConnection = {
+  __typename?: 'UserEntitiesConnection';
+  /** A list of edges. */
+  edges: Array<EntityEdge>;
+  /** A list of nodes. */
+  nodes: Array<Entity>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+};
+
 export type UserNotifications = {
   __typename?: 'UserNotifications';
   disabled: Array<NotificationKind>;
   enabled: Array<NotificationKind>;
+};
+
+export type UserOrganizationConnection = {
+  __typename?: 'UserOrganizationConnection';
+  /** A list of edges. */
+  edges: Array<OrganizationMembershipEdge>;
+  /** A list of nodes. */
+  nodes: Array<OrganizationMembership>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
 };
 
 export type Version = {

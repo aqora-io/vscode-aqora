@@ -4,6 +4,8 @@ import { progressCommand } from "../progressCliCommand";
 import { readProjectLastRunResult } from "./readScore";
 
 async function testProject() {
+  const editor = vscode.window.activeNotebookEditor;
+  console.log(editor);
   if (await isAqoraInstalled()) {
     const projectDir = await currentOrSelectedProject(
       (projectPath, projectKind) =>

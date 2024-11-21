@@ -32,6 +32,7 @@ const config: CodegenConfig = {
             output: "string | number",
           },
           DateTime: "Date",
+          NaiveDate: "Date",
           JSON: "{ [key: string]: any }",
           Semver:
             "`${number}.${number}.${number}` | `${number}.${number}.${number}-${string}` | `${number}.${number}.${number}+${string}` | `${number}.${number}.${number}-${string}+${string}`",
