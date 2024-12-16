@@ -13,6 +13,7 @@ Indicates that an Input Object is a OneOf Input Object (and thus requires
 directive @oneOf on INPUT_OBJECT
 
 enum Action {
+  ACCEPT_EVENT_INVITE
   ADD_COMPETITION_MEMBER
   ADD_EVENT_COMPETITION
   ADD_EVENT_MEMBER
@@ -43,6 +44,7 @@ enum Action {
   FETCH_WEBSITE_METADATA
   JOIN_COMPETITION
   JOIN_EVENT
+  MANAGE_EVENT_INVITE_CODE
   PUBLISH_VOTE
   READ_ACTIVITY_TRACKER
   READ_COMMENT
@@ -75,6 +77,7 @@ enum Action {
   UPDATE_AGENDA
   UPDATE_COMMENT
   UPDATE_COMPETITION
+  UPDATE_COMPETITION_ACCESS
   UPDATE_EVENT
   UPDATE_FORUM
   UPDATE_ORGANIZATION
@@ -150,6 +153,16 @@ enum Badge {
   PARIS_2024_HACKERS
   """BIG Quantum Hackathon Sports Edition by QuantX & Aqora, May 2024, Paris (FR)"""
   PARIS_2024_WINNERS
+  """Hackathon Trailblazer - 3rd Place Team - Q2B Silicon Valley 2024"""
+  Q2B2024_BRONZE
+  """Hackathon Champion - Q2B Silicon Valley 2024"""
+  Q2B2024_GOLD
+  """On-Site Participant - Q2B Hackathon 2024"""
+  Q2B2024_ONSITE
+  """Global Participant - Q2B Hackathon 2024"""
+  Q2B2024_REMOTE
+  """Hackathon Innovator - 2nd Place Team - Q2B Silicon Valley 2024"""
+  Q2B2024_SILVER
   """Badge awarded upon first submission"""
   QUANTUM_PIONEER
   TEST
@@ -196,6 +209,7 @@ type Competition implements ForumOwner & Node {
   description: String
   entityRuleAgreements(after: String, before: String, entity: UsernameOrID, first: Int, last: Int, latest: Boolean): CompetitionRuleAgreementConnection!
   forum: Forum!
+  grantHostSubmissionAccess: Boolean!
   hasLeaderboard: Boolean!
   host: Entity!
   id: ID!
@@ -332,6 +346,7 @@ input CreateCommentInput {
 input CreateCompetitionInput {
   banner: Upload
   description: String
+  grantHostSubmissionAccess: Boolean
   hasLeaderboard: Boolean
   requiresApproval: Boolean
   shortDescription: String!
@@ -494,13 +509,17 @@ type Event implements ForumOwner & Node {
   forum: Forum!
   host: Entity!
   id: ID!
+  invitations(after: String, before: String, first: Int, last: Int): EventInvitationConnection!
+  invitationsCount: Int!
+  invite: EventInvite!
   isPrivate: Boolean!
   latestRule: EventRule!
-  members(after: String, before: String, first: Int, last: Int, userIsOrgMember: ID): EventMembershipConnection!
+  members(after: String, before: String, first: Int, last: Int): EventMembershipConnection!
   membership(entity: UsernameOrID): EventMembership
   rules(after: String, before: String, first: Int, last: Int): EventRuleConnection!
   shortDescription: String!
   slug: String!
+  teams(after: String, before: String, first: Int, last: Int): OrganizationConnection!
   thumbnail: Url
   title: String!
   viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
@@ -546,6 +565,52 @@ type EventEdge {
   cursor: String!
   """The item at the end of the edge"""
   node: Event!
+}
+
+type EventInvitation implements Node {
+  email: String!
+  event: Event!
+  id: ID!
+  organization: Organization
+  registeredAs: User
+  username: String
+}
+
+type EventInvitationConnection {
+  """A list of edges."""
+  edges: [EventInvitationEdge!]!
+  """A list of nodes."""
+  nodes: [EventInvitation!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type EventInvitationEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: EventInvitation!
+}
+
+type EventInvite implements Node {
+  code: String
+  event: Event!
+  id: ID!
+  latestRuleText: String!
+  shortDescription: String!
+  thumbnail: Url
+  title: String!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+input EventMemberInvite {
+  """Required email used to find registered members, or send invitation email otherwise."""
+  email: String!
+  """Optional team name used to create teams for the event."""
+  team: String
+  """Optional username used to send invitation email when the member has not registered yet."""
+  username: String
 }
 
 type EventMembership implements Node {
@@ -778,6 +843,7 @@ input LoginUserInput {
 }
 
 type Mutation {
+  acceptEventInvite(asEntity: UsernameOrID, code: String!, id: ID!): EventInvite!
   addCompetitionMember(competitionId: ID!, entityId: ID!): CompetitionMembershipEdge!
   addEventCompetition(competitionId: ID!, eventId: ID!): EventCompetitionEdge!
   addEventMember(entityId: ID!, eventId: ID!): EventMembershipEdge!
@@ -809,7 +875,9 @@ type Mutation {
   deleteUser(id: ID!): ID!
   fetchWebsiteMetadata(url: Url!): WebsiteMetadata!
   finishUploadFile(input: FinishUploadFileInput!): FinishUploadFile!
+  generateEventInviteCode(id: ID!): EventInvite!
   initUploadFile(input: InitUploadFileInput!): InitUploadFile!
+  inviteEventMembers(eventId: ID!, invites: [EventMemberInvite!]!): Event!
   joinCompetition(asEntity: UsernameOrID, competitionId: ID!): CompetitionMembershipEdge!
   joinEvent(asEntity: UsernameOrID, eventId: ID!): EventMembershipEdge!
   loginUser(input: LoginUserInput!): UserEdge!
@@ -820,6 +888,7 @@ type Mutation {
   publishVote(id: ID!, kind: VoteKind!): VotableEdge!
   removeCompetitionMember(id: ID!): ID!
   removeEventCompetition(id: ID!): ID!
+  removeEventInviteCode(id: ID!): EventInvite!
   removeEventMember(id: ID!): ID!
   removeOrganizationMember(id: ID!): ID!
   resetPassword(input: ResetPasswordInput!): Boolean!
@@ -868,6 +937,7 @@ enum NotificationKind {
   CONTENT_MENTIONED
   CREATE_SUBMISSION
   CREATE_TOPIC
+  PROMOTIONAL_NEWSLETTER
   REPLY_COMMENT
   REPLY_TOPIC
 }
@@ -930,6 +1000,15 @@ type Organization implements Entity & Node {
   users(after: String, before: String, first: Int, last: Int): OrganizationUserConnection!
   viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
   website: String
+}
+
+type OrganizationConnection {
+  """A list of edges."""
+  edges: [OrganizationEdge!]!
+  """A list of nodes."""
+  nodes: [Organization!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
 }
 
 """An edge in a connection."""
@@ -1157,6 +1236,7 @@ input SignupUserInput {
   linkedin: String
   location: String
   password: String!
+  subscribePromotionalNewsletter: Boolean
   username: String!
   website: Url
 }
@@ -1325,6 +1405,7 @@ input UpdateCommentInput {
 input UpdateCompetitionInput {
   banner: Upload
   description: String
+  grantHostSubmissionAccess: Boolean
   hasLeaderboard: Boolean
   requiresApproval: Boolean
   rules: String

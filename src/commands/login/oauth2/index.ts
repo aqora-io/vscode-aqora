@@ -7,10 +7,8 @@ import {
   getAvailablePort,
   startLocalServerForCallback,
 } from "./callbackServer";
-import ApolloClient from "apollo-client";
-import { HttpLink } from "apollo-link-http";
+import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client/core";
 import fetch from "cross-fetch";
-import { InMemoryCache } from "apollo-cache-inmemory";
 import { isUserConnected } from "../../../credentials";
 
 function authorizeUrl(clientId: string, redirectUri: URL, state: string): URL {

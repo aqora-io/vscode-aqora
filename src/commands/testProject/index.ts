@@ -8,7 +8,7 @@ async function testProject() {
   console.log(editor);
   if (await isAqoraInstalled()) {
     const projectDir = await currentOrSelectedProject(
-      (projectPath, projectKind) =>
+      (_, projectPath, projectKind) =>
         progressCommand({
           path: projectPath,
           projectKind,

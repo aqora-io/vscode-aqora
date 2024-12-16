@@ -12,8 +12,7 @@ import {
 import { CamelToSnakeCaseNested } from "../../utils";
 import { DateTime } from "luxon";
 import { hostname } from "os";
-import { NormalizedCacheObject } from "apollo-cache-inmemory";
-import ApolloClient from "apollo-client";
+import { ApolloClient, NormalizedCacheObject } from "@apollo/client/core";
 
 const OAUTH2_TOKEN_MUTATION = gql(` 
   mutation OAUTH2_TOKEN_MUTATION($code: String!, $clientId: String!, $redirectUri: Url!) {

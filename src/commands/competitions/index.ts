@@ -9,7 +9,7 @@ const GET_COMPETITIONS = gql(`
   query GET_COMPETITIONS {
     competitions {
       edges {
-        node { 
+        node {
           slug
           title
           shortDescription

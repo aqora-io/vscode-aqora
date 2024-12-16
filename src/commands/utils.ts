@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { platform } from "os";
 import { exec } from "child_process";
-import { AqoraProjectType, GlobalArgsImpl } from "../globalArgs";
+import { AqoraProject, AqoraProjectType, GlobalArgsImpl } from "../globalArgs";
 
 export async function askForSingleFolderPath(): Promise<string | null> {
   const options: vscode.OpenDialogOptions = {
@@ -73,6 +73,7 @@ export function isAqoraInstalled(): Promise<boolean> {
 
 export async function currentOrSelectedProject(
   process: (
+    project: AqoraProject,
     projectPath: string,
     kind: AqoraProjectType,
   ) => Promise<string | undefined | void> | void,
@@ -81,7 +82,7 @@ export async function currentOrSelectedProject(
   const currentPath = GlobalArgsImpl.getInstance().currentPath();
 
   if (aqoraProject && currentPath) {
-    await process(currentPath, aqoraProject.tool.aqora.type);
+    await process(aqoraProject, currentPath, aqoraProject.tool.aqora.type);
     return currentPath;
   }
 
@@ -100,6 +101,10 @@ export async function currentOrSelectedProject(
     return;
   }
 
-  await process(projectPath, selectedAqoraProject.tool.aqora.type);
+  await process(
+    selectedAqoraProject,
+    projectPath,
+    selectedAqoraProject.tool.aqora.type,
+  );
   return projectPath;
 }

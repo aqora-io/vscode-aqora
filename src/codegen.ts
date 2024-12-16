@@ -29,7 +29,7 @@ const config: CodegenConfig = {
         scalars: {
           ID: {
             input: "string",
-            output: "string | number",
+            output: "string",
           },
           DateTime: "Date",
           NaiveDate: "Date",
