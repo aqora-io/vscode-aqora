@@ -1,4 +1,3 @@
-import { ApolloClient, NormalizedCacheObject } from "@apollo/client/core";
 import { DateTime } from "luxon";
 import { hostname } from "os";
 import * as vscode from "vscode";
@@ -6,6 +5,7 @@ import { Credentials, CredentialsFile, withLockedCredentials } from "../../crede
 import { gql } from "../../graphql";
 import { Oauth2_Token_MutationMutation, Oauth2_Token_MutationMutationVariables } from "../../graphql/graphql";
 import { CamelToSnakeCaseNested } from "../../utils";
+import { ApolloClient, NormalizedCacheObject } from "@apollo/client/core";
 
 const OAUTH2_TOKEN_MUTATION = gql(` 
   mutation OAUTH2_TOKEN_MUTATION($code: String!, $clientId: String!, $redirectUri: Url!) {
