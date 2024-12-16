@@ -5,7 +5,7 @@ import * as vscode from "vscode";
 
 export type AqoraProjectType = "submission" | "use_case";
 
-interface AqoraProject {
+export interface AqoraProject {
   project: {
     name: string;
     version: string;
@@ -15,6 +15,7 @@ interface AqoraProject {
   tool: {
     aqora: {
       type: AqoraProjectType;
+      competition: string;
     };
   };
 }

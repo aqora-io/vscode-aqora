@@ -1,9 +1,26 @@
-import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client/core";
+import {
+  split,
+  ApolloClient,
+  HttpLink,
+  InMemoryCache,
+} from "@apollo/client/core";
+import { WebSocket } from "ws";
+import { getMainDefinition } from "@apollo/client/utilities";
+import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { fetch } from "cross-fetch";
-import { getAccessToken } from "./credentials";
+import { createClient } from "graphql-ws";
 import { GlobalArgsImpl } from "./globalArgs";
+import { getAccessToken } from "./credentials";
 
-const endpoint = GlobalArgsImpl.getInstance().graphqlUrl().toString();
+const parseEndpoint = (endpoint: URL) => {
+  const wsEndpoint = new URL(endpoint);
+  wsEndpoint.protocol = endpoint.protocol === "https:" ? "wss:" : "ws:";
+  return [endpoint.toString(), wsEndpoint.toString()];
+};
+
+const [endpoint, wsEndpoint] = parseEndpoint(
+  GlobalArgsImpl.getInstance().graphqlUrl(),
+);
 
 async function createApolloClient() {
   const headers: Record<string, string> = await getAccessToken()
@@ -15,12 +32,32 @@ async function createApolloClient() {
       console.error("Error fetching headers:", error);
       return {};
     });
-  return new ApolloClient({
-    link: new HttpLink({
+
+  const link = split(
+    ({ query }) => {
+      const definition = getMainDefinition(query);
+      return (
+        definition.kind === "OperationDefinition" &&
+        definition.operation === "subscription"
+      );
+    },
+    new GraphQLWsLink(
+      createClient({
+        url: wsEndpoint,
+        webSocketImpl: WebSocket,
+        connectionParams: () => ({
+          headers,
+        }),
+      }),
+    ),
+    new HttpLink({
       uri: endpoint,
       fetch,
       headers,
     }),
+  );
+  return new ApolloClient({
+    link,
     cache: new InMemoryCache(),
   });
 }

@@ -95,10 +95,13 @@
     "cross-fetch": "^4.0.0",
     "graphql": "^15.9.0",
     "graphql-http": "^1.22.1",
+    "graphql-ws": "^5.16.0",
     "http": "^0.0.1-security",
     "luxon": "^3.5.0",
+    "node-pty": "^1.0.0",
     "pickleparser": "^0.2.1",
     "smol-toml": "^1.3.0",
+    "ws": "^8.18.0",
     "xdg-app-paths": "^8.3.0"
   },
   "packageManager": "pnpm@9.9.0+sha512.60c18acd138bff695d339be6ad13f7e936eea6745660d4cc4a776d5247c540d0edee1a563695c183a66eb917ef88f2b4feb1fc25f32a7adcadc7aaf3438e99c1"
