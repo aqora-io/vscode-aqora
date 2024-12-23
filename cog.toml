@@ -9,7 +9,9 @@ skip_untracked = false
 pre_bump_hooks = [
   "npm version {{version}} --no-commit-hooks --no-git-tag-version",
 ]
-post_bump_hooks = []
+post_bump_hooks = [
+  "vsce publish --no-git-tag-version --no-update-package-json --pat $VSCE_PAT --skip-duplicate",
+]
 pre_package_bump_hooks = []
 post_package_bump_hooks = []
 
