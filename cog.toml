@@ -6,13 +6,10 @@ tag_prefix = "v"
 branch_whitelist = ["main", "release/*"]
 skip_ci = "[skip ci]"
 skip_untracked = false
-pre_bump_hooks = ["npm version {{version}}"]
-post_bump_hooks = [
-  "vsce package --out vsix/{{version}}.vsix",
-  "vsce publish --pat $VSCE_PAT --changelog-path CHANGELOG.md --readme-path README.md --message 'chore(release): Publish version {{version}}'",
-]
+pre_bump_hooks = []
+post_bump_hooks = []
 pre_package_bump_hooks = []
-post_package_bump_hooks = ["code --install-extension vsix/{{version}}.vsix"]
+post_package_bump_hooks = []
 
 [git_hooks.commit-msg]
 script = """#!/bin/sh
