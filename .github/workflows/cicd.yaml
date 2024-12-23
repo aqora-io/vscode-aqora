@@ -2,23 +2,19 @@ name: CI/CD for VSCode Extension
 
 on:
   push:
-    branches:
-      - main
     tags:
       - "*"
-  pull_request:
-  merge_group:
   workflow_dispatch:
 
 jobs:
   git_check:
     uses: ./.github/workflows/git_check.yaml
 
-  package-extension:
+  package-and-publish-extension:
     needs: git_check
-    name: Package VSCode Extension
+    name: Package and Publish VSCode Extension
     runs-on: ubuntu-latest
-    if: "startsWith(github.ref, 'refs/tags/')"
+    if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -36,6 +32,11 @@ jobs:
 
       - name: Package Extension
         run: vsce package
+
+      - name: Publish Extension to VSCode Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: vsce publish --no-git-tag-version --no-update-package-json --pat $VSCE_PAT --skip-duplicate
 
       - name: Upload Release to GitHub
         uses: softprops/action-gh-release@v2

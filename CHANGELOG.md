@@ -1,20 +1,17 @@
-## Unreleased (8568c00..8568c00)
-#### Performance Improvements
-- update apollo graphql lib - (8568c00) - Angel Dijoux
-
-- - -
 ## v1.2.6 - 2024-12-23
-#### Miscellaneous Chores
-- change cog config - (3174037) - Angel Dijoux
-
-- - -
-
-
-## v1.2.3 - 2024-12-23
 #### Features
 - add aqora test in notebook toolbar - (b0fb134) - Angel Dijoux
 #### Miscellaneous Chores
-- bump version to 1.2.3 - (ce4baed) - Angel Dijoux
+- **(version)** v1.2.6 - (65aef19) - Angel Dijoux
+- change cog config - (3174037) - Angel Dijoux
+- change cog config - (87fb69b) - Angel Dijoux
+- change cog config - (d6ed8fa) - Angel Dijoux
+- change cog config - (752dac9) - Angel Dijoux
+- clean up repo - (1d1b340) - Angel Dijoux
+- bump version to 1.2.4 - (5c5160b) - Angel Dijoux
+- bump version to 1.2.3 - (bddc806) - Angel Dijoux
+#### Performance Improvements
+- update apollo graphql lib - (02d8690) - Angel Dijoux
 
 - - -
 
