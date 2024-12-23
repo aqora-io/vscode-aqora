@@ -1,18 +1,20 @@
 {
   "compilerOptions": {
-    "module": "NodeNext",
-    "target": "ES2022",
-    "lib": ["ES2022"],
-    "sourceMap": true,
+    "module": "CommonJS",
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "rootDir": "src",
-    "strict": true /* enable all strict type-checking options */,
+    "strict": true,
+    "baseUrl": ".",
     "plugins": [
       {
         "name": "@0no-co/graphqlsp",
         "schema": "./schema.gql"
       }
     ],
-    "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,

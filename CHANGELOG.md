@@ -1,5 +1,20 @@
-## Unreleased (292e5db..29c0a5c)
+## Unreleased (8568c00..8568c00)
+#### Performance Improvements
+- update apollo graphql lib - (8568c00) - Angel Dijoux
+
+- - -
+
+## v1.2.3 - 2024-12-23
+#### Features
+- add aqora test in notebook toolbar - (b0fb134) - Angel Dijoux
+#### Miscellaneous Chores
+- bump version to 1.2.3 - (ce4baed) - Angel Dijoux
+
+- - -
+
+## v1.2.2 - 2024-12-23
 #### Bug Fixes
+- add concurrently in package.json, rollback ci workflow - (c8e4399) - Angel Dijoux
 - notified issues - (89f490b) - Angel Dijoux
 - rollback version - (38f8dce) - Angel Dijoux
 - remove files directive from package.json - (471e275) - Angel Dijoux
@@ -21,8 +36,10 @@
 - 0.2.0 - (8f5a34c) - Angel Dijoux
 - 0.1.0 - (cd08aef) - Angel Dijoux
 #### Continuous Integration
+- **(fix)** set pnpm in HOME env - (107ac12) - Angel Dijoux
 - **(fix)** typo - (80ff6de) - Angel Dijoux
-- just release in ci, no publish - (29c0a5c) - Angel Dijoux
+- use pnpm for vsce - (7c56885) - Angel Dijoux
+- just release in ci, no publish - (56105f1) - Angel Dijoux
 - remove conditions on runnig - (4c3b93b) - Angel Dijoux
 - be able to run workflow manually - (d11f98e) - Angel Dijoux
 - fix git check - (286eeb3) - Angel Dijoux
@@ -41,6 +58,8 @@
 - first commit - (292e5db) - Angel Dijoux
 #### Miscellaneous Chores
 - **(revert)** downgrade minimum vscode version require - (293c52c) - Angel Dijoux
+- bump version to 1.2.2 - (b241286) - Angel Dijoux
+- gen changelog - (82e4936) - Angel Dijoux
 - gen new changelog - (343e33b) - Angel Dijoux
 - generate changelog - (6d5c54c) - Angel Dijoux
 - remove changelog - (029f8df) - Angel Dijoux

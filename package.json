@@ -3,6 +3,7 @@
   "displayName": "aqora",
   "description": "aqora cli wrapped for vscode",
   "version": "1.2.3",
+  "type": "commonjs",
   "publisher": "aqora-quantum",
   "repository": "https://github.com/aqora-io/vscode-aqora",
   "engines": {
@@ -87,12 +88,9 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
+    "@apollo/client": "^3.12.4",
     "@graphql-typed-document-node/core": "^3.2.0",
     "@msgpack/msgpack": "^3.0.0-beta2",
-    "apollo-cache": "^1.3.5",
-    "apollo-cache-inmemory": "^1.6.6",
-    "apollo-client": "^2.6.10",
-    "apollo-link-http": "^1.5.17",
     "concurrently": "^9.0.1",
     "cross-fetch": "^4.0.0",
     "graphql": "^15.9.0",
