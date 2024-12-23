@@ -3,6 +3,12 @@
 - update apollo graphql lib - (8568c00) - Angel Dijoux
 
 - - -
+## v1.2.6 - 2024-12-23
+#### Miscellaneous Chores
+- change cog config - (3174037) - Angel Dijoux
+
+- - -
+
 
 ## v1.2.3 - 2024-12-23
 #### Features
