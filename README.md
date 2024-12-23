@@ -1,4 +1,3 @@
-
 # Aqora for VSCode
 
 ![Aqora Logo](images/icon_white.png)
@@ -37,13 +36,13 @@ Aqora extension provides the following commands, accessible via the Command Pale
 
 1. **Aqora: Clone a template from aqora.io.**
    - Use this command to clone a competition template from Aqora.
-   
+
 2. **Aqora: Login into aqora via OAuth2.**
    - Securely log in to your Aqora account using OAuth2.
-   
+
 3. **Aqora: Test your aqora project.**
    - Run tests on your Aqora project directly from VSCode.
-   
+
 4. **Aqora: Upload your project to Aqora platform.**
    - Easily upload your project to the Aqora platform for further processing or sharing.
 
@@ -55,8 +54,7 @@ If you encounter any problems or bugs, please report them at the [GitHub issues 
 
 Contributions are welcome! Feel free to fork the repository and submit a pull request. For major changes, please open an issue first to discuss what you would like to change.
 
-Please follow [Conventional
-Commits](https://www.conventionalcommits.org/en/v1.0.0/), which allows our
+Please follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/), which allows our
 project to have beautiful changelogs based on your commit messages. We strongly
 encourage you to install [Cocogitto](https://docs.cocogitto.io/):
 
@@ -72,4 +70,3 @@ This project is licensed under the MIT License. See the [LICENSE](https://github
 ## Repository
 
 For more details, check out the [GitHub repository](https://github.com/aqora-io/vscode-aqora).
-

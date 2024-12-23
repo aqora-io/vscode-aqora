@@ -1,15 +1,12 @@
+import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client/core";
+import fetch from "cross-fetch";
+import { randomBytes } from "crypto";
 import * as vscode from "vscode";
-import { clientId, createCredentials } from "../createCredentials";
+import { isUserConnected } from "../../../credentials";
 import { GlobalArgsImpl } from "../../../globalArgs";
 import { base64UrlSafeEncode } from "../../utils";
-import { randomBytes } from "crypto";
-import {
-  getAvailablePort,
-  startLocalServerForCallback,
-} from "./callbackServer";
-import fetch from "cross-fetch";
-import { isUserConnected } from "../../../credentials";
-import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client/core";
+import { clientId, createCredentials } from "../createCredentials";
+import { getAvailablePort, startLocalServerForCallback } from "./callbackServer";
 
 function authorizeUrl(clientId: string, redirectUri: URL, state: string): URL {
   const baseUrl = new URL(

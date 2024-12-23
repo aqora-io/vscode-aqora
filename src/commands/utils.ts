@@ -1,6 +1,6 @@
-import * as vscode from "vscode";
-import { platform } from "os";
 import { exec } from "child_process";
+import { platform } from "os";
+import * as vscode from "vscode";
 import { AqoraProjectType, GlobalArgsImpl } from "../globalArgs";
 
 export async function askForSingleFolderPath(): Promise<string | null> {
@@ -92,8 +92,7 @@ export async function currentOrSelectedProject(
     return;
   }
 
-  const selectedAqoraProject =
-    await GlobalArgsImpl.getInstance().aqoraProject(projectPath);
+  const selectedAqoraProject = await GlobalArgsImpl.getInstance().aqoraProject(projectPath);
 
   if (!selectedAqoraProject) {
     vscode.window.showErrorMessage("Selected is not Aqora project.");

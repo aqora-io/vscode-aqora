@@ -10,8 +10,11 @@ jobs:
   git_check:
     uses: ./.github/workflows/git_check.yaml
 
+  dprint_check:
+    uses: ./.github/workflows/dprint_check.yaml
+
   package-and-publish-extension:
-    needs: git_check
+    needs: [git_check, dprint_check]
     name: Package and Publish VSCode Extension
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')

@@ -1,7 +1,7 @@
 import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client/core";
-import { GlobalArgsImpl } from "./globalArgs";
 import { fetch } from "cross-fetch";
 import { getAccessToken } from "./credentials";
+import { GlobalArgsImpl } from "./globalArgs";
 
 const endpoint = GlobalArgsImpl.getInstance().graphqlUrl().toString();
 

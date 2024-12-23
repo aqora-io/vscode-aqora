@@ -1,8 +1,8 @@
 import { decodeAsync } from "@msgpack/msgpack";
 import * as fs from "fs";
-import { projectLastRunResult } from "../../dirs";
-import { Readable } from "stream";
 import { Parser as PickleParser } from "pickleparser";
+import { Readable } from "stream";
+import { projectLastRunResult } from "../../dirs";
 
 interface ProjectRunResult {
   score: number;
@@ -54,9 +54,7 @@ export function readProjectLastRunResult(
             };
             resolve(result);
           })
-          .catch((decodeErr) =>
-            reject(`Error decoding MessagePack stream: ${decodeErr}`),
-          );
+          .catch((decodeErr) => reject(`Error decoding MessagePack stream: ${decodeErr}`));
       } catch (decodeErr) {
         reject(`Error decoding MessagePack file: ${decodeErr}`);
       }

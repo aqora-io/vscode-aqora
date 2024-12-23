@@ -1,5 +1,5 @@
-import * as vscode from "vscode";
 import { exec } from "child_process";
+import * as vscode from "vscode";
 
 const execCommand = (command: string): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -13,8 +13,7 @@ const execCommand = (command: string): Promise<string> => {
   });
 };
 
-const getPythonCommand = (): string =>
-  process.platform === "win32" ? "python" : "python3";
+const getPythonCommand = (): string => process.platform === "win32" ? "python" : "python3";
 
 const showPythonFound = (versionOutput: string): void => {
   vscode.window.showInformationMessage(

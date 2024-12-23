@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { currentOrSelectedProject, isAqoraInstalled } from "../utils";
 import { progressCommand } from "../progressCliCommand";
+import { currentOrSelectedProject, isAqoraInstalled } from "../utils";
 import { readProjectLastRunResult } from "./readScore";
 
 async function testProject() {

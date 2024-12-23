@@ -1,9 +1,9 @@
-import { Get_CompetitionsQuery } from "../../graphql/graphql";
-import { gql } from "../../graphql/gql";
-import { client as gqlClient } from "../../graphqlClient";
 import * as vscode from "vscode";
-import { askForSingleFolderPath, isAqoraInstalled } from "../utils";
+import { gql } from "../../graphql/gql";
+import { Get_CompetitionsQuery } from "../../graphql/graphql";
+import { client as gqlClient } from "../../graphqlClient";
 import { progressCommand } from "../progressCliCommand";
+import { askForSingleFolderPath, isAqoraInstalled } from "../utils";
 
 const GET_COMPETITIONS = gql(`
   query GET_COMPETITIONS {

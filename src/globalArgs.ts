@@ -1,7 +1,7 @@
+import * as fs from "fs";
+import * as p from "path";
 import { URL } from "url";
 import * as vscode from "vscode";
-import * as p from "path";
-import * as fs from "fs";
 
 export type AqoraProjectType = "submission" | "use_case";
 
@@ -37,8 +37,8 @@ export class GlobalArgsImpl implements GlobalArgs {
 
   private constructor() {
     this.url = new URL(
-      vscode.workspace.getConfiguration().get("aqora.url") ||
-        "https://aqora.io",
+      vscode.workspace.getConfiguration().get("aqora.url")
+        || "https://aqora.io",
     );
   }
 
@@ -123,8 +123,8 @@ async function isAqoraProject(customPath?: string): Promise<boolean> {
   }
 
   if (
-    aqoraProject.tool.aqora.type === "use_case" ||
-    aqoraProject.tool.aqora.type === "submission"
+    aqoraProject.tool.aqora.type === "use_case"
+    || aqoraProject.tool.aqora.type === "submission"
   ) {
     return true;
   }

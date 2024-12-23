@@ -1,0 +1,11 @@
+name: "dprint checks"
+
+on:
+  workflow_call:
+
+jobs:
+  style:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dprint/check@v2.2

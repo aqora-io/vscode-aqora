@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { currentOrSelectedProject, isAqoraInstalled } from "../utils";
 import { progressCommand } from "../progressCliCommand";
+import { currentOrSelectedProject, isAqoraInstalled } from "../utils";
 
 async function uplaod() {
   if (await isAqoraInstalled()) {
@@ -9,7 +9,7 @@ async function uplaod() {
         path: projectPath,
         projectKind,
         commandArgs: ["upload", "-p", projectPath],
-      }),
+      })
     );
   }
 }

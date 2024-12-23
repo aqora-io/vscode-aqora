@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
 import { templateCompetitionDisposable } from "./competitions";
+import { loginDisposable } from "./login/oauth2";
 import { testProjectDisposable } from "./testProject";
 import { uploadDisposable } from "./upload";
-import { loginDisposable } from "./login/oauth2";
 
 const disposables = [
   templateCompetitionDisposable,
