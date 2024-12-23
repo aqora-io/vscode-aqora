@@ -2,9 +2,6 @@ import { promises as fs } from "fs";
 import { DateTime } from "luxon";
 import fetch from "cross-fetch";
 import { GlobalArgsImpl } from "./globalArgs";
-import ApolloClient from "apollo-client";
-import { HttpLink } from "apollo-link-http";
-import { InMemoryCache } from "apollo-cache-inmemory";
 import {
   Refresh_TokenMutation,
   Refresh_TokenMutationVariables,
@@ -12,6 +9,7 @@ import {
 import { credentialsPath } from "./dirs";
 import { gql } from "./graphql";
 import { CamelToSnakeCaseNested } from "./utils";
+import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client/core";
 
 const EXPIRATION_PADDING_SEC = 60;
 
