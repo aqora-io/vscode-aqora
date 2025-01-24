@@ -42,10 +42,6 @@ export function readProjectLastRunResult(
 
         unpackedDataPromise
           .then((unpackedData: any) => {
-            console.log(
-              unPickleScore(unpackedData.score as string),
-              "THIS THE SCORE",
-            );
             const result: ProjectRunResult = {
               score: unPickleScore(unpackedData.score as string),
               numInputs: unpackedData.num_inputs as number,

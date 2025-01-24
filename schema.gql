@@ -18,6 +18,7 @@ enum Action {
   ADD_EVENT_COMPETITION
   ADD_EVENT_MEMBER
   AWARD_BADGE
+  CREATE_BLOG_ARTICLE
   CREATE_COMMENT
   CREATE_COMPETITION
   CREATE_COMPETITION_RULE_AGREEMENT
@@ -31,6 +32,7 @@ enum Action {
   CREATE_TAG
   CREATE_TOPIC
   CREATE_USE_CASE_VERSION
+  DELETE_BLOG_ARTICLE
   DELETE_COMMENT
   DELETE_COMPETITION
   DELETE_EVENT
@@ -75,6 +77,7 @@ enum Action {
   TRANSFER_EVENT_OWNERSHIP
   TRANSFER_ORGANIZATION_OWNERSHIP
   UPDATE_AGENDA
+  UPDATE_BLOG_ARTICLE
   UPDATE_COMMENT
   UPDATE_COMPETITION
   UPDATE_COMPETITION_ACCESS
@@ -170,6 +173,55 @@ enum Badge {
   TRIESTE_2023
 }
 
+type Blog implements ForumOwner {
+  forum: Forum!
+  forumOwnerKind: ForumOwnerKind!
+  id: ID!
+  slug: String!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+type BlogArticle implements Node {
+  authors(after: String, before: String, first: Int, last: Int): BlogArticleAuthorConnection!
+  blurHash: String
+  content: String
+  createdAt: DateTime!
+  id: ID!
+  image: Url
+  seoDescription: String
+  seoTitle: String
+  shortDescription: String!
+  title: String!
+  topic: Topic!
+  viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
+}
+
+type BlogArticleAuthorConnection {
+  """A list of edges."""
+  edges: [EntityEdge!]!
+  """A list of nodes."""
+  nodes: [Entity!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+type BlogArticleConnection {
+  """A list of edges."""
+  edges: [BlogArticleEdge!]!
+  """A list of nodes."""
+  nodes: [BlogArticle!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type BlogArticleEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+  """The item at the end of the edge"""
+  node: BlogArticle!
+}
+
 type Comment implements Node & Votable {
   author: User!
   children(after: String, before: String, first: Int, last: Int, order: VotableOrder): CommentConnection!
@@ -209,6 +261,7 @@ type Competition implements ForumOwner & Node {
   description: String
   entityRuleAgreements(after: String, before: String, entity: UsernameOrID, first: Int, last: Int, latest: Boolean): CompetitionRuleAgreementConnection!
   forum: Forum!
+  forumOwnerKind: ForumOwnerKind!
   grantHostSubmissionAccess: Boolean!
   hasLeaderboard: Boolean!
   host: Entity!
@@ -219,11 +272,13 @@ type Competition implements ForumOwner & Node {
   leaderboardSize: Int!
   members(after: String, before: String, first: Int, last: Int): CompetitionMembershipConnection!
   membership(entity: UsernameOrID): CompetitionMembership
+  noCode: Boolean!
   requiresApproval: Boolean!
   rules(after: String, before: String, first: Int, last: Int): CompetitionRuleConnection!
   shortDescription: String!
   slug: String!
   submission(entity: UsernameOrID): Submission
+  submissionPreamble: String
   submissions(after: String, before: String, entityId: ID, first: Int, last: Int, needsApproval: Boolean): SubmissionConnection!
   tags(after: String, before: String, first: Int, last: Int): CompetitionTagConnection!
   thumbnail: Url
@@ -339,6 +394,16 @@ type CompetitionTagConnection {
   pageInfo: PageInfo!
 }
 
+input CreateBlogArticleInput {
+  authorsIds: [ID!]!
+  content: String!
+  image: Upload
+  seoDescription: String
+  seoTitle: String
+  shortDescription: String!
+  title: String!
+}
+
 input CreateCommentInput {
   content: String!
 }
@@ -348,9 +413,11 @@ input CreateCompetitionInput {
   description: String
   grantHostSubmissionAccess: Boolean
   hasLeaderboard: Boolean
+  noCode: Boolean! = false
   requiresApproval: Boolean
   shortDescription: String!
   slug: String!
+  submissionPreamble: String = null
   tagIds: [ID]
   thumbnail: Upload
   title: String!
@@ -386,6 +453,7 @@ input CreateOrganizationInput {
   bio: String
   displayName: String!
   github: String
+  googleScholar: String
   image: Upload
   linkedin: String
   location: String
@@ -420,12 +488,26 @@ type DeletedComment {
   topicId: ID!
 }
 
+type EmailSignupRequest implements Node {
+  emailCanResendAt: DateTime!
+  emailSentCount: Int!
+  expiresAt: DateTime!
+  id: ID!
+  lastEmailSentAt: DateTime!
+}
+
+input EmailSignupVerficationInput {
+  id: ID!
+  token: String!
+}
+
 interface Entity {
   badges(after: String, before: String, first: Int, last: Int): EntityBadgeConnection!
   bio: String
   createdAt: DateTime!
   displayName: String!
   github: String
+  googleScholar: String
   id: ID!
   image: Url
   imageThumbnail: Url
@@ -507,6 +589,7 @@ type Event implements ForumOwner & Node {
   description: String
   entityRuleAgreements(after: String, before: String, entity: UsernameOrID, first: Int, last: Int, latest: Boolean): EventRuleAgreementConnection!
   forum: Forum!
+  forumOwnerKind: ForumOwnerKind!
   host: Entity!
   id: ID!
   invitations(after: String, before: String, first: Int, last: Int): EventInvitationConnection!
@@ -749,14 +832,15 @@ input FinishUploadFileInput {
 
 type Forum implements ForumOwner & Node & Subscribable {
   createdAt: DateTime!
+  description: String
   entitySubscription(entity: UsernameOrID): SubjectSubscription
   forum: Forum!
+  forumOwnerKind: ForumOwnerKind!
   guidelines: String
   icon: Url
   id: ID!
   orderingPriority: Int!
   owner: ForumOwner!
-  ownerKind: ForumOwnerKind!
   shortDescription: String!
   slug: String!
   title: String!
@@ -783,12 +867,14 @@ type ForumEdge {
 
 interface ForumOwner {
   forum: Forum!
+  forumOwnerKind: ForumOwnerKind!
   id: ID!
   slug: String!
   viewerCan(action: Action!, asEntity: UsernameOrID): Boolean!
 }
 
 enum ForumOwnerKind {
+  BLOG
   COMPETITION
   EVENT
   TOP_LEVEL
@@ -850,7 +936,9 @@ type Mutation {
   agreeToCompetitionRule(asEntity: UsernameOrID, competition: ID!): CompetitionRuleAgreement!
   agreeToEventRule(asEntity: UsernameOrID, event: ID!): EventRuleAgreement!
   awardBadge(badge: Badge!, entityId: ID!): EntityBadgeEdge!
+  checkEmailSignupVerification(input: EmailSignupVerficationInput!): EmailSignupRequest!
   completeProjectVersionFileMultipartUpload(eTags: [String!]!, id: ID!, uploadId: String!): ProjectVersionFile!
+  createBlogArticle(input: CreateBlogArticleInput!): BlogArticleEdge!
   createCommentForComment(commentId: ID!, input: CreateCommentInput!): CommentEdge!
   createCommentForTopic(input: CreateCommentInput!, topicId: ID!): CommentEdge!
   createCompetition(input: CreateCompetitionInput!): CompetitionEdge!
@@ -864,6 +952,7 @@ type Mutation {
   createTag(entityId: ID!, input: CreateTagInput!): TagEdge!
   createTopic(forumId: ID!, input: CreateTopicInput!): TopicEdge!
   createUseCaseVersion(competitionId: ID!, input: UpdateUseCaseInput!): ProjectVersionEdge!
+  deleteBlogArticle(id: ID!): ID!
   deleteComment(id: ID!): ID!
   deleteCompetition(id: ID!): ID!
   deleteEvent(id: ID!): ID!
@@ -891,8 +980,10 @@ type Mutation {
   removeEventInviteCode(id: ID!): EventInvite!
   removeEventMember(id: ID!): ID!
   removeOrganizationMember(id: ID!): ID!
+  resendEmailSignupVerification(id: ID!): EmailSignupRequest!
   resetPassword(input: ResetPasswordInput!): Boolean!
   resetVote(id: ID!): VotableEdge!
+  sendEmailSignupVerification(input: SendEmailSignupVerificationInput!): EmailSignupRequest!
   setCompetitionOrderingPriority(id: ID!, priority: Int!): CompetitionEdge!
   setUserNotificationSubscription(notification: NotificationKind!, subscribe: Boolean!): UserEdge!
   signupUser(input: SignupUserInput!): UserEdge!
@@ -903,6 +994,7 @@ type Mutation {
   unsubscribeFromAllNotifications: UserEdge!
   unsubscribeFromSubject(subscription: ID!): ID!
   unsubscribeNotificationForToken(token: String!): NotificationKind
+  updateBlogArticle(id: ID!, input: UpdateBlogArticleInput!): BlogArticleEdge!
   updateComment(id: ID!, input: UpdateCommentInput!): CommentEdge!
   updateCompetition(id: ID!, input: UpdateCompetitionInput!): CompetitionEdge!
   updateEvent(id: ID!, input: UpdateEventInput!): EventEdge!
@@ -912,6 +1004,11 @@ type Mutation {
   updateOrganizationMembership(kind: OrganizationMembershipKind!, organizationId: ID!, userId: ID!): OrganizationMembershipEdge!
   updateTopic(id: ID!, input: UpdateTopicInput!): Topic!
   updateUser(id: ID!, input: UpdateUserInput!): UserEdge!
+  """
+  Submit files for a "no-code" competition. This feature is not available for regular
+  competitions.
+  """
+  uploadNoCodeSubmissionVersion(asEntity: UsernameOrID, competitionId: ID!, input: UploadNoCodeSubmissionInput!): ProjectVersionEdge!
   validateSubmissionVersion(projectVersionId: ID!): ProjectVersionEdge!
   validateUseCaseVersion(projectVersionId: ID!): ProjectVersionEdge!
   withdrawBadge(id: ID!): ID!
@@ -984,6 +1081,7 @@ type Organization implements Entity & Node {
   createdAt: DateTime!
   displayName: String!
   github: String
+  googleScholar: String
   id: ID!
   image: Url
   imageThumbnail: Url
@@ -1205,6 +1303,7 @@ enum ProjectVersionStatus {
 }
 
 type Query {
+  blogArticles(after: String, before: String, first: Int, last: Int): BlogArticleConnection!
   competitionBySlug(slug: String!): Competition
   competitions(after: String, before: String, first: Int, last: Int, search: String): CompetitionConnection!
   entities(after: String, before: String, first: Int, kinds: [EntityKind!], last: Int, search: String): EntityConnection!
@@ -1227,15 +1326,21 @@ input ResetPasswordInput {
 
 scalar Semver
 
+input SendEmailSignupVerificationInput {
+  agreeToTermsAndPrivacyPolicy: Boolean!
+  email: String!
+  password: String!
+}
+
 input SignupUserInput {
   bio: String
   displayName: String!
-  email: String!
+  emailSignup: EmailSignupVerficationInput!
   github: String
+  googleScholar: String
   image: Upload
   linkedin: String
   location: String
-  password: String!
   subscribePromotionalNewsletter: Boolean
   username: String!
   website: Url
@@ -1398,6 +1503,16 @@ input UpdateAgendaInput {
   agenda: JSON
 }
 
+input UpdateBlogArticleInput {
+  authorsIds: [ID!]
+  content: String
+  image: Upload
+  seoDescription: String
+  seoTitle: String
+  shortDescription: String
+  title: String
+}
+
 input UpdateCommentInput {
   content: String!
 }
@@ -1407,10 +1522,12 @@ input UpdateCompetitionInput {
   description: String
   grantHostSubmissionAccess: Boolean
   hasLeaderboard: Boolean
+  noCode: Boolean = null
   requiresApproval: Boolean
   rules: String
   shortDescription: String
   slug: String
+  submissionPreamble: String
   tagIds: [ID]
   thumbnail: Upload
   title: String
@@ -1442,6 +1559,7 @@ input UpdateOrganizationInput {
   bio: String
   displayName: String
   github: String
+  googleScholar: String
   image: Upload
   inQuantumJob: Boolean
   linkedin: String
@@ -1472,6 +1590,7 @@ input UpdateUserInput {
   displayName: String
   email: String
   github: String
+  googleScholar: String
   image: Upload
   inQuantumJob: Boolean
   jobTitle: String
@@ -1485,6 +1604,10 @@ input UpdateUserInput {
 }
 
 scalar Upload
+
+input UploadNoCodeSubmissionInput {
+  files: [Upload!]!
+}
 
 """URL is a String implementing the [URL Standard](http://url.spec.whatwg.org/)"""
 scalar Url
@@ -1511,6 +1634,7 @@ type User implements Entity & Node {
   email: String!
   entities(after: String, before: String, first: Int, last: Int, permission: Permission, search: String): UserEntitiesConnection!
   github: String
+  googleScholar: String
   id: ID!
   image: Url
   imageThumbnail: Url

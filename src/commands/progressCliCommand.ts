@@ -47,7 +47,7 @@ function executeCommand(
       );
     });
 
-    const child = spawn("aqora", context.commandArgs, {
+    const child = spawn("aqora", [...context.commandArgs, "--no-prompt"], {
       env: {
         ...process.env,
         AQORA_URL: GlobalArgsImpl.getInstance()
@@ -121,18 +121,13 @@ function handleProcessExit(
   contextKind: ContextKind,
 ) {
   child.on("close", (code: number) => {
-    if (code === 0) {
-      vscode.window.showInformationMessage(
-        `${contextKind} ${projectKind} completed successfully.`,
-      );
-      resolve();
-    } else {
-      reject(
-        new Error(
-          `${projectKind} ${contextKind} failed with exit code ${code}.`,
-        ),
-      );
-    }
+    code === 0
+      ? resolve()
+      : reject(
+          new Error(
+            `${projectKind} ${contextKind} failed with exit code ${code}.`,
+          ),
+        );
   });
 
   child.on("error", (error: Error) => {
