@@ -5,10 +5,9 @@ import { gql } from "src/graphql";
 import { client as gqlClient } from "../../graphqlClient";
 import {
   Competition_Entity_Submission_StatusSubscription,
-  Competition_Entity_Submission_StatusSubscriptionVariables,
   UploadQuery,
-  UploadQueryVariables,
 } from "src/graphql/graphql";
+import { Progress } from "../types";
 
 const COMPETITION_ENTITY_SUBMISSION_STATUS = gql(`
   subscription COMPETITION_ENTITY_SUBMISSION_STATUS(
@@ -22,6 +21,8 @@ const COMPETITION_ENTITY_SUBMISSION_STATUS = gql(`
       latest
       status
       evaluation {
+        score
+        error
         max
       }
     }
@@ -39,118 +40,138 @@ const UPLOAD = gql(`
   }
 `);
 
+type EvaluationStatus =
+  Competition_Entity_Submission_StatusSubscription["projectVersionStatusUpdate"]["status"];
+
+function sendEvaluationMessage(
+  progress: Progress,
+  status: EvaluationStatus,
+  score?: number | null,
+  error?: string | null,
+) {
+  console.log("DEBUG: ", status, score, error);
+  const messages: Record<
+    EvaluationStatus,
+    { message: string; increment: number }
+  > = {
+    AWAITING_APPROVAL: {
+      message: "Hang tight! Approval in progress...",
+      increment: 15,
+    },
+    AWAITING_EVALUATION: {
+      message: "Evaluation queue... You're almost there!",
+      increment: 45,
+    },
+    AWAITING_VALIDATION: {
+      message: "Double-checking everything... Sit tight!",
+      increment: 80,
+    },
+    OK: { message: "Boom! You're at 100%! Great job!", increment: 100 },
+    ERROR: {
+      message: "Oops! Something went wrong.",
+      increment: 0,
+    },
+    "%future added value": {
+      message: "Hmm... Processing unknown status...",
+      increment: 0,
+    },
+  };
+  const { message, increment } = messages[status];
+
+  status === "OK" &&
+    vscode.window.showInformationMessage(message, {
+      detail: `You crushed it with a score of ${score} on the Aqora platform!`,
+      modal: false,
+    });
+
+  status === "ERROR" &&
+    vscode.window.showErrorMessage(message, {
+      detail: error ?? "",
+      modal: false,
+    });
+
+  progress.report({ message, increment });
+}
+
 async function uplaod() {
   const client = await gqlClient;
-  if (await isAqoraInstalled()) {
-    await currentOrSelectedProject(
-      async ({ tool }, projectPath, projectKind) => {
-        progressCommand({
-          path: projectPath,
-          projectKind,
-          commandArgs: ["upload", "-p", projectPath],
-        });
+  if (!(await isAqoraInstalled())) {
+    return;
+  }
+  await currentOrSelectedProject(async ({ tool }, projectPath, projectKind) => {
+    progressCommand({
+      path: projectPath,
+      projectKind,
+      commandArgs: ["upload", "-p", projectPath],
+    });
 
-        const uploadQueryVariables: UploadQueryVariables = {
-          slug: tool.aqora.competition,
-        };
+    const {
+      data: { competitionBySlug, viewer },
+      error,
+    } = await client.query<UploadQuery>({
+      query: UPLOAD,
+      variables: {
+        slug: tool.aqora.competition,
+      },
+    });
 
-        const {
-          data: { competitionBySlug, viewer },
-        } = await client.query<UploadQuery>({
-          query: UPLOAD,
-          variables: uploadQueryVariables,
-        });
+    if (!competitionBySlug || !viewer) {
+      vscode.window.showErrorMessage("Oops! Something went wrong.", {
+        detail: error?.message ?? "",
+      });
+      return;
+    }
 
-        if (!competitionBySlug || !viewer) {
-          vscode.window.showErrorMessage(
-            "Failed to fetch competition or viewer data.",
-          );
-          return;
-        }
-
-        const competitionEntitySubmissionStatusVariables: Competition_Entity_Submission_StatusSubscriptionVariables =
-          {
-            competitionId: competitionBySlug.id,
-            entityId: viewer.id,
-          };
-
-        vscode.window.withProgress(
-          {
-            location: vscode.ProgressLocation.Notification,
-            title: "Uploading Project...",
-            cancellable: true,
-          },
-          async (progress, token) => {
-            const subscription = client
-              .subscribe<Competition_Entity_Submission_StatusSubscription>({
-                query: COMPETITION_ENTITY_SUBMISSION_STATUS,
-                variables: competitionEntitySubmissionStatusVariables,
-              })
-              .subscribe({
-                next: (result) => {
-                  console.log("BIG RESULT ", result);
-                  const statusUpdate = result.data?.projectVersionStatusUpdate;
-
-                  if (!statusUpdate) {
-                    return;
-                  }
-
-                  const { evaluation, status } = statusUpdate;
-
-                  if (evaluation?.max) {
-                    const progressMessages = {
-                      AWAITING_APPROVAL: "Awaiting approval...",
-                      AWAITING_EVALUATION: "Awaiting evaluation...",
-                      AWAITING_VALIDATION: "Awaiting validation...",
-                      ERROR: "An error occurred. Please check the details.",
-                      OK: `Progress: 100.00%`,
-                      "%future added value": "Processing unknown status...",
-                    };
-
-                    if (status in progressMessages) {
-                      progress.report({ message: progressMessages[status] });
-                    } else {
-                      progress.report({
-                        message: `Status: ${status} - Processing...`,
-                      });
-                    }
-
-                    if (status === "OK") {
-                      progress.report({ increment: 100 });
-                      vscode.window.showInformationMessage("Upload complete!");
-                      subscription.unsubscribe();
-                      return;
-                    }
-                    if (status === "ERROR") {
-                      vscode.window.showErrorMessage(
-                        "An error occurred during the upload process.",
-                      );
-                      subscription.unsubscribe();
-                    }
-                  }
-                },
-                error: (error) => {
-                  vscode.window.showErrorMessage(
-                    `Error during subscription: ${error.message}`,
-                  );
-                  subscription.unsubscribe();
-                },
-                complete: () => {
-                  vscode.window.showInformationMessage(
-                    "Subscription completed.",
-                  );
-                },
+    vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: "Hold on, your project is taking flight!",
+        cancellable: true,
+      },
+      async (progress, token) => {
+        const subscription = client
+          .subscribe<Competition_Entity_Submission_StatusSubscription>({
+            query: COMPETITION_ENTITY_SUBMISSION_STATUS,
+            variables: {
+              competitionId: competitionBySlug.id,
+              entityId: viewer.id,
+            },
+          })
+          .subscribe({
+            next: ({ data }) => {
+              const statusUpdate = data?.projectVersionStatusUpdate;
+              if (!statusUpdate) {
+                subscription.unsubscribe();
+                return;
+              }
+              const { evaluation, status } = statusUpdate;
+              sendEvaluationMessage(
+                progress,
+                status,
+                evaluation?.score,
+                evaluation?.error,
+              );
+              if (status === "ERROR" || status === "OK") {
+                subscription.unsubscribe();
+                return;
+              }
+            },
+            error: ({ message }) => {
+              vscode.window.showErrorMessage("Oops! Something went wrong.", {
+                detail: message ?? "",
+                modal: false,
               });
-
-            token.onCancellationRequested(() => {
               subscription.unsubscribe();
-              vscode.window.showWarningMessage("Upload process was canceled.");
-            });
-          },
-        );
+            },
+            complete: () => {
+              subscription.unsubscribe();
+            },
+          });
+
+        token.onCancellationRequested(() => subscription.unsubscribe());
       },
     );
-  }
+  });
 }
 
 export const uploadDisposable = vscode.commands.registerCommand(
