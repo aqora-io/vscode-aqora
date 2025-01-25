@@ -6,9 +6,15 @@ tag_prefix = "v"
 branch_whitelist = ["main", "release/*"]
 skip_ci = "[skip ci]"
 skip_untracked = false
-pre_bump_hooks = ["pnpm version {{version}}"]
+pre_bump_hooks = [
+  "pnpm version {{version}} --no-commit-hooks --no-git-tag-version",
+  "pnpm install",
+  "pnpm package",
+]
 post_bump_hooks = [
-  "vsce publish --no-git-tag-version --no-update-package-json --pat $VSCE_PAT --skip-duplicate",
+  "vsce publish --no-dependencies --no-git-tag-version --no-update-package-json --pat $VSCE_PAT --skip-duplicate",
+  "git push",
+  "git push origin v{{version}}",
 ]
 
 [git_hooks.commit-msg]
