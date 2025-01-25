@@ -9,7 +9,7 @@ import { getMainDefinition } from "@apollo/client/utilities";
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { fetch } from "cross-fetch";
 import { createClient } from "graphql-ws";
-import { GlobalArgsImpl } from "./globalArgs";
+import { GlobalArgs } from "./globalArgs";
 import { getAccessToken } from "./credentials";
 
 const parseEndpoint = (endpoint: URL) => {
@@ -19,7 +19,7 @@ const parseEndpoint = (endpoint: URL) => {
 };
 
 const [endpoint, wsEndpoint] = parseEndpoint(
-  GlobalArgsImpl.getInstance().graphqlUrl(),
+  GlobalArgs.graphqlUrl(),
 );
 
 async function createApolloClient() {

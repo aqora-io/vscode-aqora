@@ -3,15 +3,15 @@ import fetch from "cross-fetch";
 import { randomBytes } from "crypto";
 import * as vscode from "vscode";
 import { isUserConnected } from "../../../credentials";
-import { GlobalArgsImpl } from "../../../globalArgs";
 import { base64UrlSafeEncode } from "../../utils";
 import { clientId, createCredentials } from "../createCredentials";
 import { getAvailablePort, startLocalServerForCallback } from "./callbackServer";
+import { GlobalArgs } from "src/globalArgs";
 
 function authorizeUrl(clientId: string, redirectUri: URL, state: string): URL {
   const baseUrl = new URL(
     "/oauth2/authorize",
-    GlobalArgsImpl.getInstance().aqoraUrl(),
+    GlobalArgs.aqoraUrl(),
   );
 
   baseUrl.searchParams.append("client_id", clientId);
@@ -41,7 +41,7 @@ async function login() {
 
   const client = new ApolloClient({
     link: new HttpLink({
-      uri: GlobalArgsImpl.getInstance().graphqlUrl().toString(),
+      uri: GlobalArgs.graphqlUrl().toString(),
       fetch: fetch,
     }),
     cache: new InMemoryCache(),
@@ -49,7 +49,7 @@ async function login() {
 
   await createCredentials(
     authCode,
-    GlobalArgsImpl.getInstance().aqoraUrl(),
+    GlobalArgs.aqoraUrl(),
     redirectUri,
     client,
   );

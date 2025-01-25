@@ -1,134 +1,112 @@
-import * as fs from "fs";
-import * as p from "path";
 import { URL } from "url";
-import * as vscode from "vscode";
+import { workspace, window } from "vscode";
+import { join } from "path";
+import { access, readFile, stat } from "fs/promises";
 
 export type AqoraProjectType = "submission" | "use_case";
 
 export interface AqoraProject {
-  project: {
-    name: string;
-    version: string;
-    requiresPython: string;
-    dependencies: string[];
+  readonly project: {
+    readonly name: string;
+    readonly version: string;
+    readonly requiresPython: string;
+    readonly dependencies: readonly string[];
   };
-  tool: {
-    aqora: {
-      type: AqoraProjectType;
-      competition: string;
+  readonly tool: {
+    readonly aqora: {
+      readonly type: AqoraProjectType;
+      readonly competition: string;
     };
   };
 }
 
-export interface GlobalArgs {
-  url: URL;
+export interface GlobalArgsProps {
+  readonly url: URL;
+  readonly noPrompt: boolean;
 
-  aqoraUrl(): URL;
-  graphqlUrl(): URL;
-  isAqoraProject(customPath?: string): Promise<boolean>;
-  aqoraProject(customPath?: string): Promise<AqoraProject | undefined>;
-  currentPath(): string | undefined;
-  getExtensionPath(): string;
+  aqoraUrl: () => URL;
+  graphqlUrl: () => URL;
+  isAqoraProject: (customPath?: string) => Promise<boolean>;
+  aqoraProject: (customPath?: string) => Promise<AqoraProject | undefined>;
+  currentPath: () => string | undefined;
+  getExtensionPath: () => string;
+  setExtensionPath: (path: string) => void;
 }
 
-export class GlobalArgsImpl implements GlobalArgs {
-  url: URL;
-  extensionPath: string | undefined;
-  private static instance: GlobalArgsImpl;
+export const GlobalArgs: GlobalArgsProps = (() => {
+  const config = workspace.getConfiguration();
+  const url = new URL(config.get<string>("aqora.url") || "https://aqora.io");
+  const noPrompt = config.get<boolean>("aqora.noPrompt") ?? true;
 
-  private constructor() {
-    this.url = new URL(
-      vscode.workspace.getConfiguration().get("aqora.url")
-        || "https://aqora.io",
+  let extensionPath: string | undefined;
+
+  const getCurrentPath = (): string | undefined => {
+    const workspaceFolders = workspace.workspaceFolders;
+    return workspaceFolders?.length
+      ? workspaceFolders[0].uri.fsPath
+      : undefined;
+  };
+
+  const getAqoraProject = async (
+    customPath?: string,
+  ): Promise<AqoraProject | undefined> => {
+    const projectPath = customPath ?? getCurrentPath();
+
+    if (!projectPath) {
+      return undefined;
+    }
+    if (!(await stat(projectPath)).isDirectory()) {
+      window.showErrorMessage("Invalid path.");
+      return undefined;
+    }
+
+    const pyprojectPath = join(projectPath, "pyproject.toml");
+
+    try {
+      access(pyprojectPath);
+    } catch (error) {
+      window.showInformationMessage("No pyproject.toml file found.");
+      return undefined;
+    }
+
+    try {
+      const { parse } = await import("smol-toml");
+      const pyprojectContent = await readFile(pyprojectPath, "utf8");
+      return parse(pyprojectContent) as unknown as AqoraProject;
+    } catch (error) {
+      window.showErrorMessage("Error reading pyproject.toml: " + error);
+      return undefined;
+    }
+  };
+
+  const isAqoraProject = async (customPath?: string): Promise<boolean> => {
+    const project = await getAqoraProject(customPath);
+    return (
+      project?.tool.aqora.type === "use_case" ||
+      project?.tool.aqora.type === "submission"
     );
-  }
+  };
 
-  public static getInstance(): GlobalArgsImpl {
-    if (!GlobalArgsImpl.instance) {
-      GlobalArgsImpl.instance = new GlobalArgsImpl();
-    }
-    return GlobalArgsImpl.instance;
-  }
-
-  aqoraUrl(): URL {
-    return new URL(this.url);
-  }
-  graphqlUrl(): URL {
-    return new URL("/graphql", this.aqoraUrl());
-  }
-  isAqoraProject(customPath?: string): Promise<boolean> {
-    return isAqoraProject(customPath);
-  }
-  aqoraProject(customPath?: string): Promise<AqoraProject | undefined> {
-    return getAqoraProject(customPath);
-  }
-  currentPath(): string | undefined {
-    return getCurrentPath();
-  }
-  setExtensionPath(path: string): void {
-    this.extensionPath = path;
-  }
-  getExtensionPath(): string {
-    if (!this.extensionPath) {
-      throw new Error("Extension path is not set.");
-    }
-    return this.extensionPath;
-  }
-}
-
-function getCurrentPath() {
-  const workspaceFolders = vscode.workspace.workspaceFolders;
-
-  if (!workspaceFolders || workspaceFolders.length === 0) {
-    return;
-  }
-
-  return workspaceFolders[0].uri.path;
-}
-
-async function getAqoraProject(
-  customPath?: string,
-): Promise<AqoraProject | undefined> {
-  const path = customPath ?? getCurrentPath();
-
-  if (!path) {
-    return;
-  }
-
-  if (!fs.statSync(path).isDirectory()) {
-    vscode.window.showErrorMessage("Invalid path.");
-    return;
-  }
-
-  const pyprojectPath = p.join(path, "pyproject.toml");
-
-  if (!fs.existsSync(pyprojectPath)) {
-    vscode.window.showInformationMessage("No pyproject.toml file found.");
-  }
-
-  try {
-    const { parse } = await import("smol-toml");
-    const pyprojectContent = fs.readFileSync(pyprojectPath, "utf8");
-    return parse(pyprojectContent) as unknown as AqoraProject;
-  } catch (error) {
-    vscode.window.showErrorMessage("Error reading pyproject.toml: " + error);
-    return;
-  }
-}
-
-async function isAqoraProject(customPath?: string): Promise<boolean> {
-  const aqoraProject = await getAqoraProject(customPath);
-
-  if (!aqoraProject) {
-    return false;
-  }
-
-  if (
-    aqoraProject.tool.aqora.type === "use_case"
-    || aqoraProject.tool.aqora.type === "submission"
-  ) {
-    return true;
-  }
-
-  return false;
-}
+  return {
+    get url() {
+      return url;
+    },
+    get noPrompt() {
+      return noPrompt;
+    },
+    aqoraUrl: () => new URL(url),
+    graphqlUrl: () => new URL("/graphql", url),
+    isAqoraProject,
+    aqoraProject: getAqoraProject,
+    currentPath: getCurrentPath,
+    getExtensionPath: (): string => {
+      if (!extensionPath) {
+        throw new Error("Extension path is not set.");
+      }
+      return extensionPath;
+    },
+    setExtensionPath: (path: string): void => {
+      extensionPath = path;
+    },
+  } as const;
+})();

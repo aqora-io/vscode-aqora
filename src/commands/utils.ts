@@ -1,17 +1,17 @@
 import { exec } from "child_process";
 import { platform } from "os";
-import * as vscode from "vscode";
-import { AqoraProject, AqoraProjectType, GlobalArgsImpl } from "../globalArgs";
+import { AqoraProject, AqoraProjectType, GlobalArgs } from "../globalArgs";
+import { OpenDialogOptions, window, env, Uri } from "vscode";
 
 export async function askForSingleFolderPath(): Promise<string | null> {
-  const options: vscode.OpenDialogOptions = {
+  const options: OpenDialogOptions = {
     canSelectMany: false, // Single folder selection
     canSelectFiles: false, // No file selection
     canSelectFolders: true, // Allow folder selection
     openLabel: "Select Folder",
   };
 
-  const folderUri = await vscode.window.showOpenDialog(options);
+  const folderUri = await window.showOpenDialog(options);
 
   if (folderUri && folderUri[0]) {
     return folderUri[0].fsPath;
@@ -48,7 +48,7 @@ export function isAqoraInstalled(): Promise<boolean> {
 
     exec(checkCommand, (error, stderr) => {
       if (error) {
-        vscode.window
+        window
           .showErrorMessage(
             `aqora CLI tool not found in the system PATH: ${stderr}`,
             "Run `pipx install aqora-cli`",
@@ -56,8 +56,8 @@ export function isAqoraInstalled(): Promise<boolean> {
           )
           .then((selection) => {
             if (selection === "Visit Documentation") {
-              vscode.env.openExternal(
-                vscode.Uri.parse(
+              env.openExternal(
+                Uri.parse(
                   "https://aqora.io/competitions/h2-groundstate-energy/data",
                 ),
               );
@@ -78,8 +78,8 @@ export async function currentOrSelectedProject(
     kind: AqoraProjectType,
   ) => Promise<string | undefined | void> | void,
 ) {
-  const aqoraProject = await GlobalArgsImpl.getInstance().aqoraProject();
-  const currentPath = GlobalArgsImpl.getInstance().currentPath();
+  const aqoraProject = await GlobalArgs.aqoraProject();
+  const currentPath = GlobalArgs.currentPath();
 
   if (aqoraProject && currentPath) {
     await process(aqoraProject, currentPath, aqoraProject.tool.aqora.type);
@@ -89,14 +89,14 @@ export async function currentOrSelectedProject(
   const projectPath = await askForSingleFolderPath();
 
   if (!projectPath) {
-    vscode.window.showErrorMessage("Please specify a project folder.");
+    window.showErrorMessage("Please specify a project folder.");
     return;
   }
 
-  const selectedAqoraProject = await GlobalArgsImpl.getInstance().aqoraProject(projectPath);
+  const selectedAqoraProject = await GlobalArgs.aqoraProject(projectPath);
 
   if (!selectedAqoraProject) {
-    vscode.window.showErrorMessage("Selected is not Aqora project.");
+    window.showErrorMessage("Selected is not Aqora project.");
     return;
   }
 

@@ -1,6 +1,6 @@
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import * as vscode from "vscode";
-import { AqoraProjectType, GlobalArgsImpl } from "../globalArgs";
+import { AqoraProjectType, GlobalArgs } from "../globalArgs";
 import { Progress } from "./types";
 
 type ContextKind = "test" | "upload" | "template" | "info";
@@ -47,18 +47,19 @@ function executeCommand(
       );
     });
 
-    const child = spawn("aqora", [...context.commandArgs, "--no-prompt"], {
-      env: {
-        ...process.env,
-        AQORA_URL: GlobalArgsImpl.getInstance()
-          .aqoraUrl()
-          .toString()
-          .slice(0, -1),
+    const child = spawn(
+      "aqora",
+      [...context.commandArgs, GlobalArgs.noPrompt ? "--no-prompt" : ""],
+      {
+        env: {
+          ...process.env,
+          AQORA_URL: GlobalArgs.aqoraUrl().toString().slice(0, -1),
+        },
+        signal: signal,
+        killSignal: "SIGSTOP",
+        serialization: "json",
       },
-      signal: signal,
-      killSignal: "SIGSTOP",
-      serialization: "json",
-    });
+    );
 
     child.stdout.setEncoding("utf8");
     child.stderr.setEncoding("utf8");
