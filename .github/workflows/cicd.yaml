@@ -3,6 +3,7 @@ name: CI/CD for VSCode Extension
 on:
   push:
     branches:
+      - main
     tags:
       - "*"
   pull_request:
@@ -23,25 +24,28 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+      - name: Enable Corepack
+        run: corepack enable
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: "pnpm"
+          cache-dependency-path: "pnpm-lock.yaml"
 
       - name: Install dependencies
-        run: npm install
+        run: pnpm install --frozen-lockfile
 
       - name: Install VSCE (CLI for managing VS Code extensions)
-        run: npm install -g @vscode/vsce
+        run: pnpm install -g @vscode/vsce
 
       - name: Package Extension
-        run: vsce package
+        run: vsce package --no-dependencies
 
       - name: Publish Extension to VSCode Marketplace
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: vsce publish --no-git-tag-version --no-update-package-json --pat $VSCE_PAT --skip-duplicate
+        run: vsce publish --no-dependencies --no-git-tag-version --no-update-package-json --pat $VSCE_PAT --skip-duplicate
 
       - name: Upload Release to GitHub
         uses: softprops/action-gh-release@v2

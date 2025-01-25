@@ -1,0 +1,45 @@
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+      - github-actions
+  categories:
+    - title: Breaking Changes 🛠
+      labels:
+        - breaking-change
+    - title: Features 🎉
+      labels:
+        - feat
+    - title: Performance Improvements 🚀
+      labels:
+        - perf
+    - title: Build System 🏗
+      labels:
+        - build
+    - title: Bug Fixes 🐛
+      labels:
+        - fix
+    - title: Documentation 📚
+      labels:
+        - docs
+    - title: Reverts 🔄
+      labels:
+        - revert
+    - title: Refactoring 🛠
+      labels:
+        - refactor
+    - title: Testing 🧪
+      labels:
+        - test
+    - title: Styling 🎨
+      labels:
+        - style
+    - title: Chores 🔧
+      labels:
+        - chore
+    - title: Continuous Integration ⚙️
+      labels:
+        - ci
+    - title: Other Changes 🔄
+      labels:
+        - "*"
