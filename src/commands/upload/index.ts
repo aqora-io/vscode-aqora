@@ -1,13 +1,10 @@
-import * as vscode from "vscode";
-import { progressCommand } from "../progressCliCommand";
-import { currentOrSelectedProject, isAqoraInstalled } from "../utils";
 import { gql } from "src/graphql";
+import { Competition_Entity_Submission_StatusSubscription, UploadQuery } from "src/graphql/graphql";
+import * as vscode from "vscode";
 import { client as gqlClient } from "../../graphqlClient";
-import {
-  Competition_Entity_Submission_StatusSubscription,
-  UploadQuery,
-} from "src/graphql/graphql";
+import { progressCommand } from "../progressCliCommand";
 import { Progress } from "../types";
+import { currentOrSelectedProject, isAqoraInstalled } from "../utils";
 
 const COMPETITION_ENTITY_SUBMISSION_STATUS = gql(`
   subscription COMPETITION_ENTITY_SUBMISSION_STATUS(
@@ -40,8 +37,7 @@ const UPLOAD = gql(`
   }
 `);
 
-type EvaluationStatus =
-  Competition_Entity_Submission_StatusSubscription["projectVersionStatusUpdate"]["status"];
+type EvaluationStatus = Competition_Entity_Submission_StatusSubscription["projectVersionStatusUpdate"]["status"];
 
 function sendEvaluationMessage(
   progress: Progress,
@@ -78,14 +74,14 @@ function sendEvaluationMessage(
   };
   const { message, increment } = messages[status];
 
-  status === "OK" &&
-    vscode.window.showInformationMessage(message, {
+  status === "OK"
+    && vscode.window.showInformationMessage(message, {
       detail: `You crushed it with a score of ${score} on the Aqora platform!`,
       modal: false,
     });
 
-  status === "ERROR" &&
-    vscode.window.showErrorMessage(message, {
+  status === "ERROR"
+    && vscode.window.showErrorMessage(message, {
       detail: error ?? "",
       modal: false,
     });

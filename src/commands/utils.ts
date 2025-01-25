@@ -1,7 +1,7 @@
 import { exec } from "child_process";
 import { platform } from "os";
+import { env, OpenDialogOptions, Uri, window } from "vscode";
 import { AqoraProject, AqoraProjectType, GlobalArgs } from "../globalArgs";
-import { OpenDialogOptions, window, env, Uri } from "vscode";
 
 export async function askForSingleFolderPath(): Promise<string | null> {
   const options: OpenDialogOptions = {

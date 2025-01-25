@@ -125,10 +125,10 @@ function handleProcessExit(
     code === 0
       ? resolve()
       : reject(
-          new Error(
-            `${projectKind} ${contextKind} failed with exit code ${code}.`,
-          ),
-        );
+        new Error(
+          `${projectKind} ${contextKind} failed with exit code ${code}.`,
+        ),
+      );
   });
 
   child.on("error", (error: Error) => {

@@ -1,8 +1,8 @@
 import * as fs from "fs";
 import * as http from "http";
 import * as path from "path";
-import { GlobalArgs } from "../../../globalArgs";
 import * as vscode from "vscode";
+import { GlobalArgs } from "../../../globalArgs";
 
 const LOGIN_REPONSE_HTML_FILE = "login_response.html";
 

@@ -1,7 +1,7 @@
-import { URL } from "url";
-import { workspace, window } from "vscode";
-import { join } from "path";
 import { access, readFile, stat } from "fs/promises";
+import { join } from "path";
+import { URL } from "url";
+import { window, workspace } from "vscode";
 
 export type AqoraProjectType = "submission" | "use_case";
 
@@ -82,8 +82,8 @@ export const GlobalArgs: GlobalArgsProps = (() => {
   const isAqoraProject = async (customPath?: string): Promise<boolean> => {
     const project = await getAqoraProject(customPath);
     return (
-      project?.tool.aqora.type === "use_case" ||
-      project?.tool.aqora.type === "submission"
+      project?.tool.aqora.type === "use_case"
+      || project?.tool.aqora.type === "submission"
     );
   };
 

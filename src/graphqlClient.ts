@@ -1,16 +1,11 @@
-import {
-  split,
-  ApolloClient,
-  HttpLink,
-  InMemoryCache,
-} from "@apollo/client/core";
-import { WebSocket } from "ws";
-import { getMainDefinition } from "@apollo/client/utilities";
+import { ApolloClient, HttpLink, InMemoryCache, split } from "@apollo/client/core";
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
+import { getMainDefinition } from "@apollo/client/utilities";
 import { fetch } from "cross-fetch";
 import { createClient } from "graphql-ws";
-import { GlobalArgs } from "./globalArgs";
+import { WebSocket } from "ws";
 import { getAccessToken } from "./credentials";
+import { GlobalArgs } from "./globalArgs";
 
 const parseEndpoint = (endpoint: URL) => {
   const wsEndpoint = new URL(endpoint);
@@ -37,8 +32,8 @@ async function createApolloClient() {
     ({ query }) => {
       const definition = getMainDefinition(query);
       return (
-        definition.kind === "OperationDefinition" &&
-        definition.operation === "subscription"
+        definition.kind === "OperationDefinition"
+        && definition.operation === "subscription"
       );
     },
     new GraphQLWsLink(
