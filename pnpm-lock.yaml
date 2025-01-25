@@ -70,7 +70,7 @@ importers:
         specifier: ~20.17.16
         version: 20.17.16
       '@types/vscode':
-        specifier: ^1.96.0
+        specifier: ^1.83.0
         version: 1.96.0
       '@types/ws':
         specifier: ^8.5.14

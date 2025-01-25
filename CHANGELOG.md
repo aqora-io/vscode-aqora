@@ -14,6 +14,25 @@
 - update apollo graphql lib - (02d8690) - Angel Dijoux
 
 - - -
+## v1.3.0 - 2025-01-25
+#### Bug Fixes
+- packages issue, cog config, eslint rules - (49e2c8a) - Angel Dijoux
+#### Continuous Integration
+- change trigger - (0e0453d) - Angel Dijoux
+- use dprint - (82aee1b) - Angel Dijoux
+- publish when pushing tag with ci/cd - (b3977cd) - Angel Dijoux
+#### Features
+- support complete subscription with evaluation after uplaod command - (188fe0f) - Angel Dijoux
+- subscribe to submission eval - (5982796) - Angel Dijoux
+#### Miscellaneous Chores
+- use pnpm in cog as well - (392b522) - Angel Dijoux
+- use pnpm in cog as well - (e483ad4) - Angel Dijoux
+- better package management - (5206cea) - Angel Dijoux
+#### Refactoring
+- global args struct - (b2acb85) - Angel Dijoux
+
+- - -
+
 
 ## v1.2.2 - 2024-12-23
 #### Bug Fixes
