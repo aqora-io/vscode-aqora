@@ -3,10 +3,10 @@ import fetch from "cross-fetch";
 import { promises as fs } from "fs";
 import { DateTime } from "luxon";
 import { credentialsPath } from "./dirs";
-import { GlobalArgsImpl } from "./globalArgs";
 import { gql } from "./graphql";
 import { Refresh_TokenMutation, Refresh_TokenMutationVariables } from "./graphql/graphql";
 import { CamelToSnakeCaseNested } from "./utils";
+import { GlobalArgs } from "./globalArgs";
 
 const EXPIRATION_PADDING_SEC = 60;
 
@@ -49,8 +49,8 @@ const REFRESH_TOKEN = gql(`
   }
 `);
 
-const aqoraUrl = GlobalArgsImpl.getInstance().aqoraUrl();
-const endpoint = GlobalArgsImpl.getInstance().graphqlUrl();
+const aqoraUrl = GlobalArgs.aqoraUrl();
+const endpoint = GlobalArgs.graphqlUrl();
 
 async function replaceFile(filePath: string, contents: Buffer): Promise<void> {
   await fs.writeFile(filePath, contents);

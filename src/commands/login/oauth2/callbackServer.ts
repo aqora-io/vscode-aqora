@@ -1,8 +1,8 @@
 import * as fs from "fs";
 import * as http from "http";
 import * as path from "path";
+import { GlobalArgs } from "../../../globalArgs";
 import * as vscode from "vscode";
-import { GlobalArgsImpl } from "../../../globalArgs";
 
 const LOGIN_REPONSE_HTML_FILE = "login_response.html";
 
@@ -53,7 +53,7 @@ export function startLocalServerForCallback(port: number): Promise<string> {
         }
         const htmlFilePath = vscode.Uri.file(
           path.join(
-            GlobalArgsImpl.getInstance().getExtensionPath(),
+            GlobalArgs.getExtensionPath(),
             "public",
             LOGIN_REPONSE_HTML_FILE,
           ),
