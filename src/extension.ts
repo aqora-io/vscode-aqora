@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import registerCommands from "./commands";
-import { checkPython } from "./python";
 import { GlobalArgs } from "./globalArgs";
+import { checkPython } from "./python";
 
 const GLOBAL_STATE_KEYS = {
   pythonChecked: "hasCheckedPython",

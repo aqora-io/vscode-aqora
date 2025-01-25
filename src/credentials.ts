@@ -3,10 +3,10 @@ import fetch from "cross-fetch";
 import { promises as fs } from "fs";
 import { DateTime } from "luxon";
 import { credentialsPath } from "./dirs";
+import { GlobalArgs } from "./globalArgs";
 import { gql } from "./graphql";
 import { Refresh_TokenMutation, Refresh_TokenMutationVariables } from "./graphql/graphql";
 import { CamelToSnakeCaseNested } from "./utils";
-import { GlobalArgs } from "./globalArgs";
 
 const EXPIRATION_PADDING_SEC = 60;
 
