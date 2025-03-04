@@ -1,11 +1,14 @@
 import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client/core";
 import fetch from "cross-fetch";
-import { promises as fs } from "fs";
+import { writeFile, access, readFile, unlink } from "fs/promises";
 import { DateTime } from "luxon";
-import { credentialsPath } from "./dirs";
+import { credentialsPath, isAccessible } from "./dirs";
 import { GlobalArgs } from "./globalArgs";
 import { gql } from "./graphql";
-import { Refresh_TokenMutation, Refresh_TokenMutationVariables } from "./graphql/graphql";
+import {
+  Refresh_TokenMutation,
+  Refresh_TokenMutationVariables,
+} from "./graphql/graphql";
 import { CamelToSnakeCaseNested } from "./utils";
 
 const EXPIRATION_PADDING_SEC = 60;
@@ -53,29 +56,41 @@ const aqoraUrl = GlobalArgs.aqoraUrl();
 const endpoint = GlobalArgs.graphqlUrl();
 
 async function replaceFile(filePath: string, contents: Buffer): Promise<void> {
-  await fs.writeFile(filePath, contents);
+  await writeFile(filePath, contents);
 }
+
+const removeLockFile = (lockFilePath: string) =>
+  access(lockFilePath)
+    .then(() => unlink(lockFilePath))
+    .catch((err) => {
+      if (err.code !== "ENOENT") {
+        console.error("Failed to remove lock file:", err);
+      }
+    });
 
 export async function withLockedCredentials<T>(
   f: (file: CredentialsFile) => Promise<T>,
 ): Promise<T> {
   const path = await credentialsPath();
-  const lockFilePath = `${path}.lock`;
 
-  // Check if lock file exists; if so, throw an error
-  try {
-    await fs.access(lockFilePath);
-    throw new Error(`File is currently locked. Cannot access: ${lockFilePath}`);
-  } catch {
-    // If access fails, the lock file does not exist, so we proceed.
+  if (!isAccessible(path)) {
+    await writeFile(path, "", "utf-8");
   }
 
-  await fs.writeFile(lockFilePath, "", "utf8");
+  const lockFilePath = `${path}.lock`;
+
+  await writeFile(lockFilePath, "", "utf8");
+
+  await access(lockFilePath).catch((error) => {
+    if (error instanceof Error) {
+      throw new Error(`Error reading file: ${error.message}`);
+    } else {
+      throw new Error("Unknown error occurred.");
+    }
+  });
 
   try {
-    let contents = await fs
-      .readFile(path, { encoding: "utf8" })
-      .catch(() => "");
+    let contents = await readFile(path, { encoding: "utf8" }).catch(() => "");
     let credentials: CredentialsFile = contents
       ? JSON.parse(contents)
       : { credentials: {} };
@@ -88,9 +103,7 @@ export async function withLockedCredentials<T>(
 
     return result;
   } finally {
-    await fs
-      .unlink(lockFilePath)
-      .catch((err) => console.error("Failed to remove lock file:", err));
+    await removeLockFile(lockFilePath);
   }
 }
 
