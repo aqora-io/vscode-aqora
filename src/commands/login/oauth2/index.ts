@@ -9,10 +9,7 @@ import { clientId, createCredentials } from "../createCredentials";
 import { getAvailablePort, startLocalServerForCallback } from "./callbackServer";
 
 function authorizeUrl(clientId: string, redirectUri: URL, state: string): URL {
-  const baseUrl = new URL(
-    "/oauth2/authorize",
-    GlobalArgs.aqoraUrl(),
-  );
+  const baseUrl = new URL("/oauth2/authorize", GlobalArgs.aqoraUrl());
 
   baseUrl.searchParams.append("client_id", clientId);
   baseUrl.searchParams.append("state", state);
@@ -39,6 +36,10 @@ async function login() {
   const redirectUri = await initiateOAuthFlow(port);
   const authCode = await startLocalServerForCallback(port);
 
+  if (!authCode) {
+    return;
+  }
+
   const client = new ApolloClient({
     link: new HttpLink({
       uri: GlobalArgs.graphqlUrl().toString(),
@@ -47,12 +48,7 @@ async function login() {
     cache: new InMemoryCache(),
   });
 
-  await createCredentials(
-    authCode,
-    GlobalArgs.aqoraUrl(),
-    redirectUri,
-    client,
-  );
+  await createCredentials(authCode, GlobalArgs.aqoraUrl(), redirectUri, client);
 
   vscode.window.showInformationMessage(
     "Login successful! \n VS Code will restart in 5 seconds to make sure everything works.",
