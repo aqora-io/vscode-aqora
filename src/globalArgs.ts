@@ -104,7 +104,7 @@ export const GlobalArgs: GlobalArgsProps = (() => {
     get noPrompt() {
       return noPrompt;
     },
-    getConfigHome: async () => config.get<string>("aqora.configHome") || (await configDir()),
+    getConfigHome: async () => config?.configHome || (await configDir()),
     aqoraUrl: () => new URL(url),
     graphqlUrl: () => new URL("/graphql", url),
     isAqoraProject,
