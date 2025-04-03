@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import * as path from "path";
 import xdgAppPaths from "xdg-app-paths";
+import { GlobalArgs } from "./globalArgs";
 
 const CREDENTIALS_FILE = "credentials.json";
 const PATH_SUFFIX = "aqora";
@@ -20,6 +21,7 @@ class SystemError extends Error {
 }
 
 export async function configDir(): Promise<string> {
+  console.log("READDDDDDD")
   const paths = xdgAppPaths({ name: PATH_SUFFIX });
 
   if (await isAccessible(paths.data())) {
@@ -37,6 +39,7 @@ export async function configDir(): Promise<string> {
   }
 }
 
+
 export async function isAccessible(path: string): Promise<boolean> {
   try {
     await fs.access(path, fs.constants.R_OK);
@@ -47,7 +50,7 @@ export async function isAccessible(path: string): Promise<boolean> {
 }
 
 export async function credentialsPath(): Promise<string> {
-  return path.join(await configDir(), CREDENTIALS_FILE);
+  return path.join(await GlobalArgs.getConfigHome(), CREDENTIALS_FILE);
 }
 
 export function projectConfigDir(projectDir: string): string {

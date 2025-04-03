@@ -2,6 +2,7 @@ import { access, readFile, stat } from "fs/promises";
 import { join } from "path";
 import { URL } from "url";
 import { window, workspace } from "vscode";
+import { configDir } from "./dirs";
 
 export type AqoraProjectType = "submission" | "use_case";
 
@@ -29,12 +30,14 @@ export interface GlobalArgsProps {
   isAqoraProject: (customPath?: string) => Promise<boolean>;
   aqoraProject: (customPath?: string) => Promise<AqoraProject | undefined>;
   currentPath: () => string | undefined;
+  getConfigHome: () => Promise<string>;
   getExtensionPath: () => string;
   setExtensionPath: (path: string) => void;
 }
 
 export const GlobalArgs: GlobalArgsProps = (() => {
   const config = workspace.getConfiguration();
+  console.log("AQORA CONFIG", config.get("aqora"));
   const url = new URL(config.get<string>("aqora.url") || "https://aqora.io");
   const noPrompt = config.get<boolean>("aqora.noPrompt") ?? true;
 
@@ -82,8 +85,8 @@ export const GlobalArgs: GlobalArgsProps = (() => {
   const isAqoraProject = async (customPath?: string): Promise<boolean> => {
     const project = await getAqoraProject(customPath);
     return (
-      project?.tool.aqora.type === "use_case"
-      || project?.tool.aqora.type === "submission"
+      project?.tool.aqora.type === "use_case" ||
+      project?.tool.aqora.type === "submission"
     );
   };
 
@@ -94,6 +97,8 @@ export const GlobalArgs: GlobalArgsProps = (() => {
     get noPrompt() {
       return noPrompt;
     },
+    getConfigHome: async () =>
+      config.get<string>("aqora.configHome") || (await configDir()),
     aqoraUrl: () => new URL(url),
     graphqlUrl: () => new URL("/graphql", url),
     isAqoraProject,

@@ -6,28 +6,10 @@ import { GlobalArgs } from "../../../globalArgs";
 
 const LOGIN_REPONSE_HTML_FILE = "login_response.html";
 
-const createServer = (
-  port: number,
-  onRequest: (
-    req: http.IncomingMessage,
-    res: http.ServerResponse,
-  ) => Promise<void>,
-) => {
-  return new http.Server((req, res) => {
-    onRequest(req, res).catch((err) => {
-      res.writeHead(500);
-      res.end("Internal Server Error");
-      console.error(err);
-    });
-  }).listen(port, () =>
-    console.info(
-      `Listening for OAuth callback on http://127.0.0.1:${port}/callback`,
-    ));
-};
-
-export const getAvailablePort = async (): Promise<number> => {
-  const tempServer = http.createServer();
+export function getAvailablePort(): Promise<number> {
   return new Promise((resolve, reject) => {
+    const tempServer = http.createServer();
+
     tempServer.listen(0, () => {
       const address = tempServer.address();
       if (address && typeof address === "object") {
@@ -38,9 +20,11 @@ export const getAvailablePort = async (): Promise<number> => {
       }
     });
 
-    tempServer.on("error", (error: any) => reject(new Error(`Error finding available port: ${error.message}`)));
+    tempServer.on("error", (error: any) => {
+      reject(new Error(`Error finding available port: ${error.message}`));
+    });
   });
-};
+}
 
 const loadHtmlFile = async (filePath: string): Promise<string> => {
   try {
@@ -50,47 +34,50 @@ const loadHtmlFile = async (filePath: string): Promise<string> => {
   }
 };
 
-const handleCallbackRequest = async (
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
-): Promise<void> => {
-  if (!req.url?.startsWith("/callback")) {
-    res.writeHead(404);
-    res.end("Not Found");
-    return;
-  }
-
-  const urlParams = new URLSearchParams(req.url.split("?")[1]);
-  const authorizationCode = urlParams.get("code");
-
-  if (!authorizationCode) {
-    res.writeHead(400);
-    res.end("Invalid callback request");
-    throw new Error("No authorization code found");
-  }
-
-  const htmlFilePath = vscode.Uri.file(
-    path.join(GlobalArgs.getExtensionPath(), "public", LOGIN_REPONSE_HTML_FILE),
-  );
-  const htmlContent = await loadHtmlFile(htmlFilePath.path);
-
-  res.writeHead(200, { "Content-Type": "text/html" });
-  res.end(htmlContent);
-};
-
-export const startLocalServerForCallback = async (
-  port: number,
-  onClose?: () => void,
-): Promise<string | undefined> => {
-  const server = createServer(port, handleCallbackRequest).close(onClose);
-
+export function startLocalServerForCallback(port: number): Promise<string> {
   return new Promise((resolve, reject) => {
-    server.on("close", () => {
-      resolve(undefined);
+    const server = http.createServer(async (req, res) => {
+      if (req.url?.startsWith("/callback")) {
+        const urlParams = new URLSearchParams(req.url.split("?")[1]);
+        const authorizationCode = urlParams.get("code");
+
+        if (!authorizationCode) {
+          res.writeHead(400);
+          res.end("Invalid callback request");
+          reject(new Error("No authorization code found"));
+          return;
+        }
+        const htmlFilePath = vscode.Uri.file(
+          path.join(
+            GlobalArgs.getExtensionPath(),
+            "public",
+            LOGIN_REPONSE_HTML_FILE,
+          ),
+        );
+        const htmlContent = await loadHtmlFile(htmlFilePath.path);
+
+        res.writeHead(200, { "Content-Type": "text/html" });
+        res.end(htmlContent);
+        server.close();
+
+        resolve(authorizationCode);
+        server.close();
+      } else {
+        res.writeHead(404);
+        res.end("Not Found");
+      }
     });
 
-    server.on("error", (err) => {
-      reject(new Error(`Failed to start server: ${err.message}`));
+    server.listen(port, () => {
+      console.log(
+        `Listening for OAuth callback on ${server.address()}:/callback`,
+      );
     });
+
+    server.on("error", (error: any) => {
+      reject(new Error(`Failed to start server: ${error.message}`));
+    });
+
+    server.on("close", () => console.info("Server closed"));
   });
-};
+}
