@@ -14,6 +14,16 @@
 - update apollo graphql lib - (02d8690) - Angel Dijoux
 
 - - -
+## v1.3.2 - 2025-04-03
+#### Bug Fixes
+- config home in global args - (2c3913d) - Angel Dijoux
+#### Features
+- make aqora config directory configurable - (ab9f2f5) - Angel Dijoux
+#### Refactoring
+- define a interface for workspace config - (f8846ee) - Angel Dijoux
+
+- - -
+
 ## v1.3.0 - 2025-01-25
 #### Bug Fixes
 - packages issue, cog config, eslint rules - (49e2c8a) - Angel Dijoux
