@@ -5,10 +5,7 @@ import { DateTime } from "luxon";
 import { credentialsPath, isAccessible } from "./dirs";
 import { GlobalArgs } from "./globalArgs";
 import { gql } from "./graphql";
-import {
-  Refresh_TokenMutation,
-  Refresh_TokenMutationVariables,
-} from "./graphql/graphql";
+import { Refresh_TokenMutation, Refresh_TokenMutationVariables } from "./graphql/graphql";
 import { CamelToSnakeCaseNested } from "./utils";
 
 const EXPIRATION_PADDING_SEC = 60;

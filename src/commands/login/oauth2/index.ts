@@ -6,10 +6,7 @@ import * as vscode from "vscode";
 import { isUserConnected } from "../../../credentials";
 import { base64UrlSafeEncode } from "../../utils";
 import { clientId, createCredentials } from "../createCredentials";
-import {
-  getAvailablePort,
-  startLocalServerForCallback,
-} from "./callbackServer";
+import { getAvailablePort, startLocalServerForCallback } from "./callbackServer";
 
 function authorizeUrl(clientId: string, redirectUri: URL, state: string): URL {
   const baseUrl = new URL("/oauth2/authorize", GlobalArgs.aqoraUrl());

@@ -6,6 +6,12 @@ import { configDir } from "./dirs";
 
 export type AqoraProjectType = "submission" | "use_case";
 
+interface AqoraWorkspaceConfig {
+  url?: URL;
+  noPrompt?: boolean;
+  configHome?: string;
+}
+
 export interface AqoraProject {
   readonly project: {
     readonly name: string;
@@ -36,10 +42,11 @@ export interface GlobalArgsProps {
 }
 
 export const GlobalArgs: GlobalArgsProps = (() => {
-  const config = workspace.getConfiguration();
-  console.log("AQORA CONFIG", config.get("aqora"));
-  const url = new URL(config.get<string>("aqora.url") || "https://aqora.io");
-  const noPrompt = config.get<boolean>("aqora.noPrompt") ?? true;
+  const config = workspace
+    .getConfiguration()
+    .get<AqoraWorkspaceConfig>("aqora");
+  const url = config?.url || new URL("https://aqora.io");
+  const noPrompt = config?.noPrompt ?? true;
 
   let extensionPath: string | undefined;
 
@@ -85,8 +92,8 @@ export const GlobalArgs: GlobalArgsProps = (() => {
   const isAqoraProject = async (customPath?: string): Promise<boolean> => {
     const project = await getAqoraProject(customPath);
     return (
-      project?.tool.aqora.type === "use_case" ||
-      project?.tool.aqora.type === "submission"
+      project?.tool.aqora.type === "use_case"
+      || project?.tool.aqora.type === "submission"
     );
   };
 
@@ -97,8 +104,7 @@ export const GlobalArgs: GlobalArgsProps = (() => {
     get noPrompt() {
       return noPrompt;
     },
-    getConfigHome: async () =>
-      config.get<string>("aqora.configHome") || (await configDir()),
+    getConfigHome: async () => config.get<string>("aqora.configHome") || (await configDir()),
     aqoraUrl: () => new URL(url),
     graphqlUrl: () => new URL("/graphql", url),
     isAqoraProject,

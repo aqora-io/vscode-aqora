@@ -21,7 +21,7 @@ class SystemError extends Error {
 }
 
 export async function configDir(): Promise<string> {
-  console.log("READDDDDDD")
+  console.log("READDDDDDD");
   const paths = xdgAppPaths({ name: PATH_SUFFIX });
 
   if (await isAccessible(paths.data())) {
@@ -38,7 +38,6 @@ export async function configDir(): Promise<string> {
     );
   }
 }
-
 
 export async function isAccessible(path: string): Promise<boolean> {
   try {
