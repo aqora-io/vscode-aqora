@@ -1,7 +1,7 @@
 import { gql } from "src/graphql";
 import { Competition_Entity_Submission_StatusSubscription, UploadQuery } from "src/graphql/graphql";
 import * as vscode from "vscode";
-import { client as gqlClient } from "../../graphqlClient";
+import { createAuthenticatedClient } from "../../graphqlClient";
 import { progressCommand } from "../progressCliCommand";
 import { Progress } from "../types";
 import { currentOrSelectedProject, isAqoraInstalled } from "../utils";
@@ -90,7 +90,7 @@ function sendEvaluationMessage(
 }
 
 async function uplaod() {
-  const client = await gqlClient;
+  const client = await createAuthenticatedClient();
   if (!(await isAqoraInstalled())) {
     return;
   }

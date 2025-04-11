@@ -13,21 +13,9 @@ const parseEndpoint = (endpoint: URL) => {
   return [endpoint.toString(), wsEndpoint.toString()];
 };
 
-const [endpoint, wsEndpoint] = parseEndpoint(
-  GlobalArgs.graphqlUrl(),
-);
+const [endpoint, wsEndpoint] = parseEndpoint(GlobalArgs.graphqlUrl());
 
-async function createApolloClient() {
-  const headers: Record<string, string> = await getAccessToken()
-    .then((accessToken) => ({
-      Authorization: accessToken ? `Bearer ${accessToken}` : "",
-      "User-Agent": "aqora-vscode",
-    }))
-    .catch((error) => {
-      console.error("Error fetching headers:", error);
-      return {};
-    });
-
+export async function createApolloClient(headers: Record<string, string> = {}) {
   const link = split(
     ({ query }) => {
       const definition = getMainDefinition(query);
@@ -40,9 +28,7 @@ async function createApolloClient() {
       createClient({
         url: wsEndpoint,
         webSocketImpl: WebSocket,
-        connectionParams: () => ({
-          headers,
-        }),
+        connectionParams: () => ({ headers }),
       }),
     ),
     new HttpLink({
@@ -51,10 +37,23 @@ async function createApolloClient() {
       headers,
     }),
   );
+
   return new ApolloClient({
     link,
     cache: new InMemoryCache(),
   });
 }
 
-export const client = createApolloClient();
+export async function createAuthenticatedClient() {
+  const headers: Record<string, string> = await getAccessToken()
+    .then((accessToken) => ({
+      Authorization: accessToken ? `Bearer ${accessToken}` : "",
+      "User-Agent": "aqora-vscode",
+    }))
+    .catch((error) => {
+      console.error("Error fetching headers:", error);
+      return {};
+    });
+
+  return createApolloClient(headers);
+}

@@ -22,6 +22,9 @@ importers:
       '@msgpack/msgpack':
         specifier: 3.0.0-beta2
         version: 3.0.0-beta2
+      '@noble/ed25519':
+        specifier: ^2.2.3
+        version: 2.2.3
       cross-fetch:
         specifier: ^4.1.0
         version: 4.1.0
@@ -905,6 +908,9 @@ packages:
   '@msgpack/msgpack@3.0.0-beta2':
     resolution: {integrity: sha512-y+l1PNV0XDyY8sM3YtuMLK5vE3/hkfId+Do8pLo/OPxfxuFAUwcGz3oiiUuV46/aBpwTzZ+mRWVMtlSKbradhw==}
     engines: {node: '>= 14'}
+
+  '@noble/ed25519@2.2.3':
+    resolution: {integrity: sha512-iHV8eI2mRcUmOx159QNrU8vTpQ/Xm70yJ2cTk3Trc86++02usfqFoNl6x0p3JN81ZDS/1gx6xiK0OwrgqCT43g==}
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -4142,6 +4148,8 @@ snapshots:
   '@kamilkisiela/fast-url-parser@1.1.4': {}
 
   '@msgpack/msgpack@3.0.0-beta2': {}
+
+  '@noble/ed25519@2.2.3': {}
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
