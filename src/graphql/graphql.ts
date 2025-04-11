@@ -63,6 +63,7 @@ export type Action =
   | 'CREATE_EVENT'
   | 'CREATE_EVENT_RULE_AGREEMENT'
   | 'CREATE_FORUM'
+  | 'CREATE_OAUTH_2_CONFIG'
   | 'CREATE_ORGANIZATION'
   | 'CREATE_PROJECT_VERSION_APPROVAL'
   | 'CREATE_SUBJECT_SUBSCRIPTION'
@@ -75,6 +76,7 @@ export type Action =
   | 'DELETE_COMPETITION'
   | 'DELETE_EVENT'
   | 'DELETE_FORUM'
+  | 'DELETE_OAUTH_2_CONFIG'
   | 'DELETE_ORGANIZATION'
   | 'DELETE_PROJECT_VERSION_APPROVAL'
   | 'DELETE_SUBJECT_SUBSCRIPTION'
@@ -84,6 +86,7 @@ export type Action =
   | 'FETCH_WEBSITE_METADATA'
   | 'JOIN_COMPETITION'
   | 'JOIN_EVENT'
+  | 'MANAGE_ENTITY_BAN'
   | 'MANAGE_EVENT_INVITE_CODE'
   | 'PUBLISH_VOTE'
   | 'READ_ACTIVITY_TRACKER'
@@ -94,9 +97,12 @@ export type Action =
   | 'READ_COMPETITION_RULE_AGREEMENT'
   | 'READ_EVENT'
   | 'READ_EVENT_COMPETITION'
+  | 'READ_EVENT_INVITATION'
   | 'READ_EVENT_MEMBERSHIP'
   | 'READ_EVENT_RULE'
   | 'READ_EVENT_RULE_AGREEMENT'
+  | 'READ_OAUTH_2_CONFIG'
+  | 'READ_OAUTH_2_CONFIG_SECRET'
   | 'READ_PROJECT_VERSION'
   | 'READ_PROJECT_VERSION_APPROVAL'
   | 'READ_PROJECT_VERSION_EVALUATION'
@@ -121,6 +127,7 @@ export type Action =
   | 'UPDATE_COMPETITION_ACCESS'
   | 'UPDATE_EVENT'
   | 'UPDATE_FORUM'
+  | 'UPDATE_OAUTH_2_CONFIG'
   | 'UPDATE_ORGANIZATION'
   | 'UPDATE_ORGANIZATION_MEMBERSHIP'
   | 'UPDATE_PROJECT_VERSION'
@@ -189,6 +196,8 @@ export type Badge =
   | 'INGENII_2024_THIRD'
   /** Quantum Hackathon by Québec Quantique & QuantX, June 2022, Montreal (CAN) */
   | 'MONTREAL_2022'
+  /** Malicious Login Detection 2024 by NovaceneAI – Winner */
+  | 'NOVACENE_2024'
   /** Quantum hackathon by QuantX, March 2021, Paris (FR) */
   | 'PARIS_2021'
   /** BIG QC-AI-HPC Hackathon by QuantX, March 2023, Paris (FR) */
@@ -207,8 +216,16 @@ export type Badge =
   | 'Q2B2024_REMOTE'
   /** Hackathon Innovator - 2nd Place Team - Q2B Silicon Valley 2024 */
   | 'Q2B2024_SILVER'
+  /** QInnovision Challenge 2024-2025 Finalist! */
+  | 'QINNOVISION_2025_FINALIST'
+  /** QInnovision Challenge 2024-2025 Winner! */
+  | 'QINNOVISION_2025_WINNER'
   /** Badge awarded upon first submission */
   | 'QUANTUM_PIONEER'
+  /** Quantum Trading Oracle  – 1st Place */
+  | 'QUANTUM_SIGNALS_LOB_2025_FIRST'
+  /** Schrödinger’s Trader – 2nd Place - Second Prize */
+  | 'QUANTUM_SIGNALS_LOB_2025_SECOND'
   | 'TEST'
   /** ICTP - Quantinuum Quantum Hackathon, April 2023, Trieste (IT) */
   | 'TRIESTE_2023'
@@ -237,9 +254,11 @@ export type BlogArticle = Node & {
   createdAt: Scalars['DateTime']['output'];
   id: Scalars['ID']['output'];
   image: Maybe<Scalars['Url']['output']>;
+  imageAlt: Maybe<Scalars['String']['output']>;
   seoDescription: Maybe<Scalars['String']['output']>;
   seoTitle: Maybe<Scalars['String']['output']>;
   shortDescription: Scalars['String']['output'];
+  slugLower: Scalars['String']['output'];
   title: Scalars['String']['output'];
   topic: Topic;
   viewerCan: Scalars['Boolean']['output'];
@@ -301,6 +320,8 @@ export type Comment = Node & Votable & {
   topic: Topic;
   viewerCan: Scalars['Boolean']['output'];
   voted: Maybe<EntityVote>;
+  voterCount: Scalars['Int']['output'];
+  voters: VotersConnection;
   votes: Scalars['Int']['output'];
 };
 
@@ -317,6 +338,14 @@ export type CommentChildrenArgs = {
 export type CommentViewerCanArgs = {
   action: Action;
   asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+};
+
+
+export type CommentVotersArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type CommentConnection = {
@@ -339,12 +368,13 @@ export type CommentEdge = {
   node: Comment;
 };
 
-export type Competition = ForumOwner & Node & {
+export type Competition = ForumOwner & Node & Subscribable & {
   __typename?: 'Competition';
   banner: Maybe<Scalars['Url']['output']>;
   createdAt: Scalars['DateTime']['output'];
   description: Maybe<Scalars['String']['output']>;
   entityRuleAgreements: CompetitionRuleAgreementConnection;
+  entitySubscription: Maybe<SubjectSubscription>;
   forum: Forum;
   forumOwnerKind: ForumOwnerKind;
   grantHostSubmissionAccess: Scalars['Boolean']['output'];
@@ -353,8 +383,7 @@ export type Competition = ForumOwner & Node & {
   id: Scalars['ID']['output'];
   isPrivate: Scalars['Boolean']['output'];
   latestRule: CompetitionRule;
-  leaderboard: ProjectVersionEvaluationConnection;
-  leaderboardSize: Scalars['Int']['output'];
+  leaderboard: SubmissionRankingConnection;
   members: CompetitionMembershipConnection;
   membership: Maybe<CompetitionMembership>;
   noCode: Scalars['Boolean']['output'];
@@ -384,6 +413,11 @@ export type CompetitionEntityRuleAgreementsArgs = {
 };
 
 
+export type CompetitionEntitySubscriptionArgs = {
+  entity: InputMaybe<Scalars['UsernameOrID']['input']>;
+};
+
+
 export type CompetitionLeaderboardArgs = {
   after: InputMaybe<Scalars['String']['input']>;
   before: InputMaybe<Scalars['String']['input']>;
@@ -397,6 +431,7 @@ export type CompetitionMembersArgs = {
   before: InputMaybe<Scalars['String']['input']>;
   first: InputMaybe<Scalars['Int']['input']>;
   last: InputMaybe<Scalars['Int']['input']>;
+  search: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -569,6 +604,23 @@ export type CompetitionRuleEdge = {
   node: CompetitionRule;
 };
 
+export type CompetitionSubscription = Node & SubjectSubscription & {
+  __typename?: 'CompetitionSubscription';
+  competition: Competition;
+  createdAt: Scalars['DateTime']['output'];
+  entity: Entity;
+  id: Scalars['ID']['output'];
+  kind: SubjectKind;
+  subject: Subscribable;
+  viewerCan: Scalars['Boolean']['output'];
+};
+
+
+export type CompetitionSubscriptionViewerCanArgs = {
+  action: Action;
+  asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+};
+
 export type CompetitionTagConnection = {
   __typename?: 'CompetitionTagConnection';
   /** A list of edges. */
@@ -583,6 +635,7 @@ export type CreateBlogArticleInput = {
   authorsIds: Array<Scalars['ID']['input']>;
   content: Scalars['String']['input'];
   image: InputMaybe<Scalars['Upload']['input']>;
+  imageAlt: InputMaybe<Scalars['String']['input']>;
   seoDescription: InputMaybe<Scalars['String']['input']>;
   seoTitle: InputMaybe<Scalars['String']['input']>;
   shortDescription: Scalars['String']['input'];
@@ -633,6 +686,12 @@ export type CreateMultipartUploadResponse = {
   __typename?: 'CreateMultipartUploadResponse';
   uploadId: Scalars['String']['output'];
   urls: Array<Scalars['Url']['output']>;
+};
+
+export type CreateOauth2ConfigInput = {
+  description: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  redirectUri: Scalars['Url']['input'];
 };
 
 export type CreateOrganizationInput = {
@@ -823,7 +882,7 @@ export type Event = ForumOwner & Node & {
   id: Scalars['ID']['output'];
   invitations: EventInvitationConnection;
   invitationsCount: Scalars['Int']['output'];
-  invite: EventInvite;
+  invite: EventPublicInvite;
   isPrivate: Scalars['Boolean']['output'];
   latestRule: EventRule;
   members: EventMembershipConnection;
@@ -870,6 +929,7 @@ export type EventMembersArgs = {
   before: InputMaybe<Scalars['String']['input']>;
   first: InputMaybe<Scalars['Int']['input']>;
   last: InputMaybe<Scalars['Int']['input']>;
+  search: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -980,9 +1040,7 @@ export type EventInvitationEdge = {
   node: EventInvitation;
 };
 
-export type EventInvite = Node & {
-  __typename?: 'EventInvite';
-  code: Maybe<Scalars['String']['output']>;
+export type EventInvite = {
   event: Event;
   id: Scalars['ID']['output'];
   latestRuleText: Scalars['String']['output'];
@@ -1055,6 +1113,41 @@ export type EventMembershipKind =
   | 'HOST'
   | 'PARTICIPANT'
   | '%future added value';
+
+export type EventPrivateInvite = EventInvite & Node & {
+  __typename?: 'EventPrivateInvite';
+  event: Event;
+  id: Scalars['ID']['output'];
+  latestRuleText: Scalars['String']['output'];
+  shortDescription: Scalars['String']['output'];
+  thumbnail: Maybe<Scalars['Url']['output']>;
+  title: Scalars['String']['output'];
+  viewerCan: Scalars['Boolean']['output'];
+};
+
+
+export type EventPrivateInviteViewerCanArgs = {
+  action: Action;
+  asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+};
+
+export type EventPublicInvite = EventInvite & Node & {
+  __typename?: 'EventPublicInvite';
+  code: Maybe<Scalars['String']['output']>;
+  event: Event;
+  id: Scalars['ID']['output'];
+  latestRuleText: Scalars['String']['output'];
+  shortDescription: Scalars['String']['output'];
+  thumbnail: Maybe<Scalars['Url']['output']>;
+  title: Scalars['String']['output'];
+  viewerCan: Scalars['Boolean']['output'];
+};
+
+
+export type EventPublicInviteViewerCanArgs = {
+  action: Action;
+  asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+};
 
 export type EventRule = Node & {
   __typename?: 'EventRule';
@@ -1332,6 +1425,7 @@ export type Mutation = {
   agreeToEventRule: EventRuleAgreement;
   awardBadge: EntityBadgeEdge;
   checkEmailSignupVerification: EmailSignupRequest;
+  checkOauth2Auth: Oauth2AuthResponse;
   completeProjectVersionFileMultipartUpload: ProjectVersionFile;
   createBlogArticle: BlogArticleEdge;
   createCommentForComment: CommentEdge;
@@ -1339,8 +1433,10 @@ export type Mutation = {
   createCompetition: CompetitionEdge;
   createEvent: EventEdge;
   createForum: ForumEdge;
+  createOauth2AuthRequest: Scalars['Url']['output'];
+  createOauth2Config: Oauth2ConfigEdge;
   createOrganization: OrganizationEdge;
-  createPasswordReset: Scalars['Boolean']['output'];
+  createPasswordReset: PasswordReset;
   createProjectVersionApproval: ProjectVersionApprovalEdge;
   createProjectVersionFileMultipartUpload: CreateMultipartUploadResponse;
   createSubmissionVersion: ProjectVersionEdge;
@@ -1352,6 +1448,7 @@ export type Mutation = {
   deleteCompetition: Scalars['ID']['output'];
   deleteEvent: Scalars['ID']['output'];
   deleteForum: Scalars['ID']['output'];
+  deleteOauth2Config: Scalars['ID']['output'];
   deleteOrganization: Scalars['ID']['output'];
   deleteProjectVersionApproval: Scalars['ID']['output'];
   deleteTag: Scalars['ID']['output'];
@@ -1359,7 +1456,7 @@ export type Mutation = {
   deleteUser: Scalars['ID']['output'];
   fetchWebsiteMetadata: WebsiteMetadata;
   finishUploadFile: FinishUploadFile;
-  generateEventInviteCode: EventInvite;
+  generateEventInviteCode: EventPublicInvite;
   initUploadFile: InitUploadFile;
   inviteEventMembers: Event;
   joinCompetition: CompetitionMembershipEdge;
@@ -1372,7 +1469,7 @@ export type Mutation = {
   publishVote: VotableEdge;
   removeCompetitionMember: Scalars['ID']['output'];
   removeEventCompetition: Scalars['ID']['output'];
-  removeEventInviteCode: EventInvite;
+  removeEventInviteCode: EventPublicInvite;
   removeEventMember: Scalars['ID']['output'];
   removeOrganizationMember: Scalars['ID']['output'];
   resendEmailSignupVerification: EmailSignupRequest;
@@ -1380,6 +1477,7 @@ export type Mutation = {
   resetVote: VotableEdge;
   sendEmailSignupVerification: EmailSignupRequest;
   setCompetitionOrderingPriority: CompetitionEdge;
+  setUserIsBanned: User;
   setUserNotificationSubscription: UserEdge;
   signupUser: UserEdge;
   subscribeToSubject: SubjectSubscriptionEdge;
@@ -1395,6 +1493,7 @@ export type Mutation = {
   updateEvent: EventEdge;
   updateEventAgenda: EventEdge;
   updateForum: ForumEdge;
+  updateOauth2Config: Oauth2ConfigEdge;
   updateOrganization: OrganizationEdge;
   updateOrganizationMembership: OrganizationMembershipEdge;
   updateTopic: Topic;
@@ -1412,7 +1511,7 @@ export type Mutation = {
 
 export type MutationAcceptEventInviteArgs = {
   asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
-  code: Scalars['String']['input'];
+  code: InputMaybe<Scalars['String']['input']>;
   id: Scalars['ID']['input'];
 };
 
@@ -1458,6 +1557,12 @@ export type MutationCheckEmailSignupVerificationArgs = {
 };
 
 
+export type MutationCheckOauth2AuthArgs = {
+  code: Scalars['String']['input'];
+  state: Scalars['String']['input'];
+};
+
+
 export type MutationCompleteProjectVersionFileMultipartUploadArgs = {
   eTags: Array<Scalars['String']['input']>;
   id: Scalars['ID']['input'];
@@ -1494,6 +1599,17 @@ export type MutationCreateEventArgs = {
 
 export type MutationCreateForumArgs = {
   input: CreateForumInput;
+};
+
+
+export type MutationCreateOauth2AuthRequestArgs = {
+  provider: Oauth2Provider;
+};
+
+
+export type MutationCreateOauth2ConfigArgs = {
+  asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+  input: CreateOauth2ConfigInput;
 };
 
 
@@ -1569,6 +1685,11 @@ export type MutationDeleteForumArgs = {
 };
 
 
+export type MutationDeleteOauth2ConfigArgs = {
+  oauth2ConfigId: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteOrganizationArgs = {
   id: Scalars['ID']['input'];
 };
@@ -1638,6 +1759,7 @@ export type MutationLoginUserArgs = {
 
 
 export type MutationOauth2AuthorizeArgs = {
+  consent?: Scalars['Boolean']['input'];
   input: Oauth2AuthorizeInput;
 };
 
@@ -1706,6 +1828,12 @@ export type MutationSendEmailSignupVerificationArgs = {
 export type MutationSetCompetitionOrderingPriorityArgs = {
   id: Scalars['ID']['input'];
   priority: Scalars['Int']['input'];
+};
+
+
+export type MutationSetUserIsBannedArgs = {
+  entityId: Scalars['ID']['input'];
+  isBanned: Scalars['Boolean']['input'];
 };
 
 
@@ -1790,6 +1918,12 @@ export type MutationUpdateForumArgs = {
 };
 
 
+export type MutationUpdateOauth2ConfigArgs = {
+  input: UpdateOauth2ConfigInput;
+  oauth2ConfigId: Scalars['ID']['input'];
+};
+
+
 export type MutationUpdateOrganizationArgs = {
   id: Scalars['ID']['input'];
   input: UpdateOrganizationInput;
@@ -1850,9 +1984,24 @@ export type NotificationKind =
   | 'REPLY_TOPIC'
   | '%future added value';
 
+export type Oauth2Action =
+  | 'LOGGED_IN'
+  | 'SIGNUP_REQUIRED'
+  | '%future added value';
+
+export type Oauth2AuthResponse = {
+  action: Oauth2Action;
+};
+
+export type Oauth2AuthorizationCode = {
+  __typename?: 'Oauth2AuthorizationCode';
+  code: Scalars['String']['output'];
+};
+
 export type Oauth2AuthorizeInput = {
   clientId: Scalars['String']['input'];
   redirectUri: InputMaybe<Scalars['Url']['input']>;
+  scope: InputMaybe<Scalars['String']['input']>;
   state: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1863,9 +2012,88 @@ export type Oauth2AuthorizeOutput = {
   unauthorized: Scalars['Boolean']['output'];
 };
 
+export type Oauth2Config = Node & {
+  __typename?: 'Oauth2Config';
+  description: Maybe<Scalars['String']['output']>;
+  entity: Entity;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  redirectUri: Scalars['String']['output'];
+  secret: Scalars['String']['output'];
+  viewerCan: Scalars['Boolean']['output'];
+};
+
+
+export type Oauth2ConfigViewerCanArgs = {
+  action: Action;
+  asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+};
+
+export type Oauth2ConfigConnection = {
+  __typename?: 'Oauth2ConfigConnection';
+  /** A list of edges. */
+  edges: Array<Oauth2ConfigEdge>;
+  /** A list of nodes. */
+  nodes: Array<Oauth2Config>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+};
+
+/** An edge in a connection. */
+export type Oauth2ConfigEdge = {
+  __typename?: 'Oauth2ConfigEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: Oauth2Config;
+};
+
+export type Oauth2LoggedIn = Oauth2AuthResponse & {
+  __typename?: 'Oauth2LoggedIn';
+  action: Oauth2Action;
+  user: User;
+};
+
+export type Oauth2PreGrant = {
+  __typename?: 'Oauth2PreGrant';
+  clientId: Scalars['String']['output'];
+  oauth2Config: Maybe<Oauth2Config>;
+  redirectUri: Maybe<Scalars['Url']['output']>;
+  scope: Array<Scope>;
+  state: Maybe<Scalars['String']['output']>;
+  valid: Scalars['Boolean']['output'];
+};
+
+export type Oauth2Provider =
+  | 'GITHUB'
+  | 'GOOGLE'
+  | '%future added value';
+
+export type Oauth2RedirectInput = {
+  authorizationUrl: Scalars['Url']['input'];
+  signature: Scalars['String']['input'];
+};
+
 export type Oauth2RefreshInput = {
   clientId: Scalars['String']['input'];
+  clientSecret: InputMaybe<Scalars['String']['input']>;
   refreshToken: Scalars['String']['input'];
+};
+
+export type Oauth2Signup = {
+  __typename?: 'Oauth2Signup';
+  secret: Scalars['String']['output'];
+};
+
+export type Oauth2SignupInput = {
+  secret: Scalars['String']['input'];
+};
+
+export type Oauth2SignupRequired = Oauth2AuthResponse & {
+  __typename?: 'Oauth2SignupRequired';
+  action: Oauth2Action;
+  oauth2Signup: Oauth2Signup;
+  userInfo: Oauth2UserInfo;
 };
 
 export type Oauth2Token = {
@@ -1887,6 +2115,15 @@ export type Oauth2TokenOutput = {
   clientError: Scalars['Boolean']['output'];
   issued: Maybe<Oauth2Token>;
   unauthorized: Scalars['Boolean']['output'];
+};
+
+export type Oauth2UserInfo = {
+  __typename?: 'Oauth2UserInfo';
+  avatarUrl: Maybe<Scalars['Url']['output']>;
+  bio: Maybe<Scalars['String']['output']>;
+  email: Scalars['String']['output'];
+  name: Maybe<Scalars['String']['output']>;
+  username: Maybe<Scalars['String']['output']>;
 };
 
 export type Organization = Entity & Node & {
@@ -2042,6 +2279,13 @@ export type PageInfo = {
   startCursor: Maybe<Scalars['String']['output']>;
 };
 
+export type PasswordReset = {
+  __typename?: 'PasswordReset';
+  canResendAt: Scalars['DateTime']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  expiresAt: Scalars['DateTime']['output'];
+};
+
 export type Permission = {
   actingAs: InputMaybe<Scalars['UsernameOrID']['input']>;
   on: InputMaybe<Scalars['ID']['input']>;
@@ -2188,9 +2432,7 @@ export type ProjectVersionEvaluation = Node & {
   id: Scalars['ID']['output'];
   latest: Scalars['Boolean']['output'];
   max: Scalars['Boolean']['output'];
-  points: Scalars['Int']['output'];
   projectVersion: ProjectVersion;
-  rank: Maybe<Scalars['Int']['output']>;
   score: Maybe<Scalars['Float']['output']>;
   submission: Submission;
   viewerCan: Scalars['Boolean']['output'];
@@ -2200,25 +2442,6 @@ export type ProjectVersionEvaluation = Node & {
 export type ProjectVersionEvaluationViewerCanArgs = {
   action: Action;
   asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
-};
-
-export type ProjectVersionEvaluationConnection = {
-  __typename?: 'ProjectVersionEvaluationConnection';
-  /** A list of edges. */
-  edges: Array<ProjectVersionEvaluationEdge>;
-  /** A list of nodes. */
-  nodes: Array<ProjectVersionEvaluation>;
-  /** Information to aid in pagination. */
-  pageInfo: PageInfo;
-};
-
-/** An edge in a connection. */
-export type ProjectVersionEvaluationEdge = {
-  __typename?: 'ProjectVersionEvaluationEdge';
-  /** A cursor for use in pagination */
-  cursor: Scalars['String']['output'];
-  /** The item at the end of the edge */
-  node: ProjectVersionEvaluation;
 };
 
 export type ProjectVersionFile = Node & {
@@ -2261,6 +2484,7 @@ export type ProjectVersionStatus =
 
 export type Query = {
   __typename?: 'Query';
+  blogArticleBySlug: Maybe<BlogArticle>;
   blogArticles: BlogArticleConnection;
   competitionBySlug: Maybe<Competition>;
   competitions: CompetitionConnection;
@@ -2272,9 +2496,17 @@ export type Query = {
   forums: ForumConnection;
   leaderboard: GlobalLeaderboardConnection;
   node: Node;
+  oauth2Authorize: Maybe<Oauth2PreGrant>;
+  oauth2Configs: Oauth2ConfigConnection;
+  oauth2Providers: Array<Oauth2Provider>;
   tags: TagConnection;
   version: Version;
   viewer: User;
+};
+
+
+export type QueryBlogArticleBySlugArgs = {
+  slug: Scalars['String']['input'];
 };
 
 
@@ -2358,6 +2590,19 @@ export type QueryNodeArgs = {
 };
 
 
+export type QueryOauth2AuthorizeArgs = {
+  input: Oauth2AuthorizeInput;
+};
+
+
+export type QueryOauth2ConfigsArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QueryTagsArgs = {
   after: InputMaybe<Scalars['String']['input']>;
   before: InputMaybe<Scalars['String']['input']>;
@@ -2370,27 +2615,40 @@ export type ResetPasswordInput = {
   secret: Scalars['String']['input'];
 };
 
+export type Scope =
+  | 'ALL'
+  | 'DEFAULT'
+  | 'READ_COMPETITION'
+  | 'READ_PROJECT'
+  | '%future added value';
+
 export type SendEmailSignupVerificationInput = {
   agreeToTermsAndPrivacyPolicy: Scalars['Boolean']['input'];
   email: Scalars['String']['input'];
   password: Scalars['String']['input'];
 };
 
+export type SignupInput = {
+  email: InputMaybe<EmailSignupVerficationInput>;
+  oauth2: InputMaybe<Oauth2SignupInput>;
+};
+
 export type SignupUserInput = {
   bio: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
-  emailSignup: EmailSignupVerficationInput;
   github: InputMaybe<Scalars['String']['input']>;
   googleScholar: InputMaybe<Scalars['String']['input']>;
   image: InputMaybe<Scalars['Upload']['input']>;
   linkedin: InputMaybe<Scalars['String']['input']>;
   location: InputMaybe<Scalars['String']['input']>;
+  signup: SignupInput;
   subscribePromotionalNewsletter: InputMaybe<Scalars['Boolean']['input']>;
   username: Scalars['String']['input'];
   website: InputMaybe<Scalars['Url']['input']>;
 };
 
 export type SubjectKind =
+  | 'COMPETITION'
   | 'FORUM'
   | 'TOPIC'
   | '%future added value';
@@ -2480,6 +2738,28 @@ export type SubmissionEdge = {
   node: Submission;
 };
 
+export type SubmissionRankingConnection = {
+  __typename?: 'SubmissionRankingConnection';
+  /** A list of edges. */
+  edges: Array<SubmissionRankingSubmissionEdge>;
+  /** A list of nodes. */
+  nodes: Array<Submission>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+};
+
+/** An edge in a connection. */
+export type SubmissionRankingSubmissionEdge = {
+  __typename?: 'SubmissionRankingSubmissionEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  evaluation: ProjectVersionEvaluation;
+  /** The item at the end of the edge */
+  node: Submission;
+  points: Scalars['Int']['output'];
+  rank: Scalars['Int']['output'];
+};
+
 export type Subscribable = {
   entitySubscription: Maybe<SubjectSubscription>;
   id: Scalars['ID']['output'];
@@ -2501,6 +2781,7 @@ export type Subscription = {
   __typename?: 'Subscription';
   deletedComments: DeletedComment;
   newComments: CommentEdge;
+  oauth2Redirect: Oauth2AuthorizationCode;
   projectVersionStatusUpdate: ProjectVersion;
   updatedComments: CommentEdge;
   updatedEntity: Entity;
@@ -2514,6 +2795,11 @@ export type SubscriptionDeletedCommentsArgs = {
 
 export type SubscriptionNewCommentsArgs = {
   topicId: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type SubscriptionOauth2RedirectArgs = {
+  input: Oauth2RedirectInput;
 };
 
 
@@ -2576,10 +2862,13 @@ export type Topic = Node & Subscribable & Votable & {
   entitySubscription: Maybe<SubjectSubscription>;
   forum: Forum;
   id: Scalars['ID']['output'];
+  slugLower: Scalars['String']['output'];
   title: Scalars['String']['output'];
   url: Maybe<Scalars['String']['output']>;
   viewerCan: Scalars['Boolean']['output'];
   voted: Maybe<EntityVote>;
+  voterCount: Scalars['Int']['output'];
+  voters: VotersConnection;
   votes: Scalars['Int']['output'];
 };
 
@@ -2601,6 +2890,14 @@ export type TopicEntitySubscriptionArgs = {
 export type TopicViewerCanArgs = {
   action: Action;
   asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+};
+
+
+export type TopicVotersArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type TopicConnection = {
@@ -2648,6 +2945,7 @@ export type UpdateBlogArticleInput = {
   authorsIds: InputMaybe<Array<Scalars['ID']['input']>>;
   content: InputMaybe<Scalars['String']['input']>;
   image: InputMaybe<Scalars['Upload']['input']>;
+  imageAlt: InputMaybe<Scalars['String']['input']>;
   seoDescription: InputMaybe<Scalars['String']['input']>;
   seoTitle: InputMaybe<Scalars['String']['input']>;
   shortDescription: InputMaybe<Scalars['String']['input']>;
@@ -2694,6 +2992,13 @@ export type UpdateForumInput = {
   shortDescription: InputMaybe<Scalars['String']['input']>;
   slug: InputMaybe<Scalars['String']['input']>;
   title: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateOauth2ConfigInput = {
+  description: InputMaybe<Scalars['String']['input']>;
+  name: InputMaybe<Scalars['String']['input']>;
+  redirectUri: InputMaybe<Scalars['Url']['input']>;
+  refreshSecret: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type UpdateOrganizationInput = {
@@ -2796,6 +3101,7 @@ export type User = Entity & Node & {
   image: Maybe<Scalars['Url']['output']>;
   imageThumbnail: Maybe<Scalars['Url']['output']>;
   isAvailableOnQuantumJobs: Scalars['Boolean']['output'];
+  isBanned: Scalars['Boolean']['output'];
   jobBoardProfileLink: Maybe<Scalars['Url']['output']>;
   jobTitle: Maybe<Scalars['String']['output']>;
   karma: Scalars['Int']['output'];
@@ -2954,6 +3260,8 @@ export type Votable = {
   id: Scalars['ID']['output'];
   viewerCan: Scalars['Boolean']['output'];
   voted: Maybe<EntityVote>;
+  voterCount: Scalars['Int']['output'];
+  voters: VotersConnection;
   votes: Scalars['Int']['output'];
 };
 
@@ -2961,6 +3269,14 @@ export type Votable = {
 export type VotableViewerCanArgs = {
   action: Action;
   asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+};
+
+
+export type VotableVotersArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
 };
 
 /** An edge in a connection. */
@@ -2983,6 +3299,16 @@ export type VoteKind =
   | 'UPVOTE'
   | '%future added value';
 
+export type VotersConnection = {
+  __typename?: 'VotersConnection';
+  /** A list of edges. */
+  edges: Array<EntityEdge>;
+  /** A list of nodes. */
+  nodes: Array<Entity>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+};
+
 export type WebsiteMetadata = {
   __typename?: 'WebsiteMetadata';
   description: Maybe<Scalars['String']['output']>;
@@ -3002,6 +3328,14 @@ export type Oauth2_Token_MutationMutationVariables = Exact<{
 
 
 export type Oauth2_Token_MutationMutation = { __typename?: 'Mutation', oauth2Token: { __typename?: 'Oauth2TokenOutput', clientError: boolean, unauthorized: boolean, issued: { __typename?: 'Oauth2Token', expiresIn: number, accessToken: string, refreshToken: string } | null } };
+
+export type Oauth2RedirectSubscriptionSubscriptionVariables = Exact<{
+  authUrl: Scalars['Url']['input'];
+  signature: Scalars['String']['input'];
+}>;
+
+
+export type Oauth2RedirectSubscriptionSubscription = { __typename?: 'Subscription', oauth2Redirect: { __typename?: 'Oauth2AuthorizationCode', code: string } };
 
 export type Competition_Entity_Submission_StatusSubscriptionVariables = Exact<{
   competitionId: Scalars['ID']['input'];
@@ -3029,6 +3363,7 @@ export type Refresh_TokenMutation = { __typename?: 'Mutation', oauth2Refresh: { 
 
 export const Get_CompetitionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GET_COMPETITIONS"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"competitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"edges"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"node"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"shortDescription"}}]}}]}}]}}]}}]} as unknown as DocumentNode<Get_CompetitionsQuery, Get_CompetitionsQueryVariables>;
 export const Oauth2_Token_MutationDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"OAUTH2_TOKEN_MUTATION"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"code"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"clientId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"redirectUri"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Url"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"oauth2Token"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"code"},"value":{"kind":"Variable","name":{"kind":"Name","value":"code"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"clientId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"clientId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"redirectUri"},"value":{"kind":"Variable","name":{"kind":"Name","value":"redirectUri"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"clientError"}},{"kind":"Field","name":{"kind":"Name","value":"unauthorized"}},{"kind":"Field","name":{"kind":"Name","value":"issued"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"expiresIn"}},{"kind":"Field","name":{"kind":"Name","value":"accessToken"}},{"kind":"Field","name":{"kind":"Name","value":"refreshToken"}}]}}]}}]}}]} as unknown as DocumentNode<Oauth2_Token_MutationMutation, Oauth2_Token_MutationMutationVariables>;
+export const Oauth2RedirectSubscriptionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"Oauth2RedirectSubscription"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"authUrl"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Url"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"signature"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"oauth2Redirect"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"authorizationUrl"},"value":{"kind":"Variable","name":{"kind":"Name","value":"authUrl"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"signature"},"value":{"kind":"Variable","name":{"kind":"Name","value":"signature"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"code"}}]}}]}}]} as unknown as DocumentNode<Oauth2RedirectSubscriptionSubscription, Oauth2RedirectSubscriptionSubscriptionVariables>;
 export const Competition_Entity_Submission_StatusDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"COMPETITION_ENTITY_SUBMISSION_STATUS"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"competitionId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"entityId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectVersionStatusUpdate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"competitionId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"competitionId"}}},{"kind":"Argument","name":{"kind":"Name","value":"entityId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"entityId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"latest"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"evaluation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"score"}},{"kind":"Field","name":{"kind":"Name","value":"error"}},{"kind":"Field","name":{"kind":"Name","value":"max"}}]}}]}}]}}]} as unknown as DocumentNode<Competition_Entity_Submission_StatusSubscription, Competition_Entity_Submission_StatusSubscriptionVariables>;
 export const UploadDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"UPLOAD"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"slug"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"viewer"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"competitionBySlug"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"slug"},"value":{"kind":"Variable","name":{"kind":"Name","value":"slug"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<UploadQuery, UploadQueryVariables>;
 export const Refresh_TokenDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"REFRESH_TOKEN"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"clientId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"refreshToken"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"oauth2Refresh"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"clientId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"clientId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"refreshToken"},"value":{"kind":"Variable","name":{"kind":"Name","value":"refreshToken"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"clientError"}},{"kind":"Field","name":{"kind":"Name","value":"unauthorized"}},{"kind":"Field","name":{"kind":"Name","value":"issued"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"expiresIn"}},{"kind":"Field","name":{"kind":"Name","value":"accessToken"}},{"kind":"Field","name":{"kind":"Name","value":"refreshToken"}}]}}]}}]}}]} as unknown as DocumentNode<Refresh_TokenMutation, Refresh_TokenMutationVariables>;

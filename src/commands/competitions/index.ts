@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { gql } from "../../graphql/gql";
 import { Get_CompetitionsQuery } from "../../graphql/graphql";
-import { client as gqlClient } from "../../graphqlClient";
+import { createAuthenticatedClient } from "../../graphqlClient";
 import { progressCommand } from "../progressCliCommand";
 import { askForSingleFolderPath, isAqoraInstalled } from "../utils";
 
@@ -22,7 +22,7 @@ const GET_COMPETITIONS = gql(`
 const competitionPath = (path: string, slug: string) => `${path}/${slug}`;
 
 async function templateCompetition() {
-  const client = await gqlClient;
+  const client = await createAuthenticatedClient();
   const {
     data: { competitions },
   } = await client.query<Get_CompetitionsQuery>({ query: GET_COMPETITIONS });
