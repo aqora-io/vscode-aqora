@@ -14,6 +14,14 @@
 - update apollo graphql lib - (02d8690) - Angel Dijoux
 
 - - -
+## v1.3.3 - 2025-04-18
+#### Bug Fixes
+- deps vulnerabilities - (f344dad) - Angel Dijoux
+#### Features
+- migrate to the new oauth flow - (5f964c9) - Angel Dijoux
+
+- - -
+
 ## v1.3.2 - 2025-04-03
 #### Bug Fixes
 - config home in global args - (2c3913d) - Angel Dijoux

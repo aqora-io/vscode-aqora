@@ -2,7 +2,7 @@
   "name": "aqora",
   "displayName": "aqora",
   "description": "aqora cli wrapped for vscode",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "type": "commonjs",
   "publisher": "aqora-quantum",
   "repository": "https://github.com/aqora-io/vscode-aqora",
