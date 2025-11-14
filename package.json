@@ -50,6 +50,10 @@
       {
         "command": "aqora.uplaod",
         "title": "Aqora: Upload your project to Aqora platform"
+      },
+      {
+        "command": "aqora.dataset.list",
+        "title": "Aqora: Show available datasets"
       }
     ]
   },

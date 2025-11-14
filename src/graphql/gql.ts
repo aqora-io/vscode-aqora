@@ -15,6 +15,7 @@ import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-
  */
 type Documents = {
     "\n  query GET_COMPETITIONS {\n    competitions {\n      edges {\n        node {\n          slug\n          title\n          shortDescription\n        }\n      }\n    }\n  }\n": typeof types.Get_CompetitionsDocument,
+    "\n  query GET_DATASETS {\n    datasets {\n      edges {\n        node {\n          slug\n          votes\n          shortDescription\n        }\n      }\n    }\n  }\n": typeof types.Get_DatasetsDocument,
     " \n  mutation OAUTH2_TOKEN_MUTATION($code: String!, $clientId: String!, $redirectUri: Url!) {\n    oauth2Token(\n      input: { code: $code, clientId: $clientId, redirectUri: $redirectUri }\n    ) {\n      clientError\n      unauthorized\n      issued {\n        expiresIn\n        accessToken\n        refreshToken\n      }\n    }\n  }\n": typeof types.Oauth2_Token_MutationDocument,
     "\n  subscription Oauth2RedirectSubscription($authUrl: Url!, $signature: String!) {\n     oauth2Redirect(input: { authorizationUrl: $authUrl, signature: $signature }) {\n      code\n    }\n  }\n": typeof types.Oauth2RedirectSubscriptionDocument,
     "\n  subscription COMPETITION_ENTITY_SUBMISSION_STATUS(\n    $competitionId: ID!\n    $entityId: ID!\n  ) {\n    projectVersionStatusUpdate(\n      competitionId: $competitionId\n      entityId: $entityId\n    ) {\n      latest\n      status\n      evaluation {\n        score\n        error\n        max\n      }\n    }\n  }\n": typeof types.Competition_Entity_Submission_StatusDocument,
@@ -23,6 +24,7 @@ type Documents = {
 };
 const documents: Documents = {
     "\n  query GET_COMPETITIONS {\n    competitions {\n      edges {\n        node {\n          slug\n          title\n          shortDescription\n        }\n      }\n    }\n  }\n": types.Get_CompetitionsDocument,
+    "\n  query GET_DATASETS {\n    datasets {\n      edges {\n        node {\n          slug\n          votes\n          shortDescription\n        }\n      }\n    }\n  }\n": types.Get_DatasetsDocument,
     " \n  mutation OAUTH2_TOKEN_MUTATION($code: String!, $clientId: String!, $redirectUri: Url!) {\n    oauth2Token(\n      input: { code: $code, clientId: $clientId, redirectUri: $redirectUri }\n    ) {\n      clientError\n      unauthorized\n      issued {\n        expiresIn\n        accessToken\n        refreshToken\n      }\n    }\n  }\n": types.Oauth2_Token_MutationDocument,
     "\n  subscription Oauth2RedirectSubscription($authUrl: Url!, $signature: String!) {\n     oauth2Redirect(input: { authorizationUrl: $authUrl, signature: $signature }) {\n      code\n    }\n  }\n": types.Oauth2RedirectSubscriptionDocument,
     "\n  subscription COMPETITION_ENTITY_SUBMISSION_STATUS(\n    $competitionId: ID!\n    $entityId: ID!\n  ) {\n    projectVersionStatusUpdate(\n      competitionId: $competitionId\n      entityId: $entityId\n    ) {\n      latest\n      status\n      evaluation {\n        score\n        error\n        max\n      }\n    }\n  }\n": types.Competition_Entity_Submission_StatusDocument,
@@ -48,6 +50,10 @@ export function gql(source: string): unknown;
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  query GET_COMPETITIONS {\n    competitions {\n      edges {\n        node {\n          slug\n          title\n          shortDescription\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query GET_COMPETITIONS {\n    competitions {\n      edges {\n        node {\n          slug\n          title\n          shortDescription\n        }\n      }\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query GET_DATASETS {\n    datasets {\n      edges {\n        node {\n          slug\n          votes\n          shortDescription\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query GET_DATASETS {\n    datasets {\n      edges {\n        node {\n          slug\n          votes\n          shortDescription\n        }\n      }\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

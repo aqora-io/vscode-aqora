@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { templateCompetitionDisposable } from "./competitions";
+import { datasetDisposables } from "./datasets";
 import { loginDisposable } from "./login/oauth2";
 import { testProjectDisposable } from "./testProject";
 import { uploadDisposable } from "./upload";
@@ -9,6 +10,7 @@ const disposables = [
   loginDisposable,
   testProjectDisposable,
   uploadDisposable,
+  ...datasetDisposables,
 ];
 
 export default function registerCommands(
