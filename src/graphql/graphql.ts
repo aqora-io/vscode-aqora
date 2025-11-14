@@ -33,6 +33,7 @@ export type Scalars = {
    */
   NaiveDate: { input: Date; output: Date; }
   Semver: { input: `${number}.${number}.${number}` | `${number}.${number}.${number}-${string}` | `${number}.${number}.${number}+${string}` | `${number}.${number}.${number}-${string}+${string}`; output: `${number}.${number}.${number}` | `${number}.${number}.${number}-${string}` | `${number}.${number}.${number}+${string}` | `${number}.${number}.${number}-${string}+${string}`; }
+  TimeZone: { input: String; output: String; }
   /**
    * A UUID is a unique 128-bit number, stored as 16 octets. UUIDs are parsed as
    * Strings within GraphQL. UUIDs are used to assign unique identifiers to
@@ -52,6 +53,7 @@ export type Scalars = {
 
 export type Action =
   | 'ACCEPT_EVENT_INVITE'
+  | 'ADD_COMPETITION_JURY'
   | 'ADD_COMPETITION_MEMBER'
   | 'ADD_EVENT_COMPETITION'
   | 'ADD_EVENT_MEMBER'
@@ -60,6 +62,12 @@ export type Action =
   | 'CREATE_COMMENT'
   | 'CREATE_COMPETITION'
   | 'CREATE_COMPETITION_RULE_AGREEMENT'
+  | 'CREATE_COMPETITION_STAGE'
+  | 'CREATE_COMPETITION_TEAM_REQUEST'
+  | 'CREATE_DATASET'
+  | 'CREATE_DATASET_COMPETITION'
+  | 'CREATE_DATASET_MEMBER'
+  | 'CREATE_DATASET_VERSION'
   | 'CREATE_EVENT'
   | 'CREATE_EVENT_RULE_AGREEMENT'
   | 'CREATE_FORUM'
@@ -74,6 +82,11 @@ export type Action =
   | 'DELETE_BLOG_ARTICLE'
   | 'DELETE_COMMENT'
   | 'DELETE_COMPETITION'
+  | 'DELETE_COMPETITION_TEAM_REQUEST'
+  | 'DELETE_DATASET'
+  | 'DELETE_DATASET_COMPETITION'
+  | 'DELETE_DATASET_MEMBER'
+  | 'DELETE_DATASET_VERSION'
   | 'DELETE_EVENT'
   | 'DELETE_FORUM'
   | 'DELETE_OAUTH_2_CONFIG'
@@ -88,13 +101,20 @@ export type Action =
   | 'JOIN_EVENT'
   | 'MANAGE_ENTITY_BAN'
   | 'MANAGE_EVENT_INVITE_CODE'
+  | 'PUBLISH_DATASET_VERSION'
   | 'PUBLISH_VOTE'
   | 'READ_ACTIVITY_TRACKER'
   | 'READ_COMMENT'
   | 'READ_COMPETITION'
   | 'READ_COMPETITION_MEMBERSHIP'
+  | 'READ_COMPETITION_PRIVATE_APPROVAL'
   | 'READ_COMPETITION_RULE'
   | 'READ_COMPETITION_RULE_AGREEMENT'
+  | 'READ_COMPETITION_SCORING_CRITERION'
+  | 'READ_DATASET'
+  | 'READ_DATASET_MEMBER'
+  | 'READ_DATASET_VERSION'
+  | 'READ_DATASET_VERSION_FILE'
   | 'READ_EVENT'
   | 'READ_EVENT_COMPETITION'
   | 'READ_EVENT_INVITATION'
@@ -105,32 +125,46 @@ export type Action =
   | 'READ_OAUTH_2_CONFIG_SECRET'
   | 'READ_PROJECT_VERSION'
   | 'READ_PROJECT_VERSION_APPROVAL'
+  | 'READ_PROJECT_VERSION_APPROVAL_SCORE'
   | 'READ_PROJECT_VERSION_EVALUATION'
   | 'READ_PROJECT_VERSION_FILE'
   | 'READ_SUBJECT_SUBSCRIPTION'
+  | 'READ_SUBMISSION'
   | 'READ_TOPIC'
   | 'READ_USER_EMAIL'
   | 'READ_USER_NOTIFICATIONS'
   | 'READ_USER_PERMISSIONS'
+  | 'REEVALUATE_COMPETITION'
+  | 'REMOVE_COMPETITION_JURY'
   | 'REMOVE_COMPETITION_MEMBER'
+  | 'REMOVE_COMPETITION_STAGE'
   | 'REMOVE_EVENT_COMPETITION'
   | 'REMOVE_EVENT_MEMBER'
   | 'REMOVE_ORGANIZATION_MEMBER'
+  | 'SEND_COMPETITION_TEAM_REQUEST_MESSAGE'
   | 'SET_COMPETITION_ORDERING_PRIORITY'
+  | 'SET_EVENT_ORDERING_PRIORITY'
   | 'TRANSFER_COMPETITION_OWNERSHIP'
+  | 'TRANSFER_DATASET_OWNERSHIP'
   | 'TRANSFER_EVENT_OWNERSHIP'
   | 'TRANSFER_ORGANIZATION_OWNERSHIP'
   | 'UPDATE_AGENDA'
   | 'UPDATE_BLOG_ARTICLE'
   | 'UPDATE_COMMENT'
   | 'UPDATE_COMPETITION'
-  | 'UPDATE_COMPETITION_ACCESS'
+  | 'UPDATE_COMPETITION_MEMBER'
+  | 'UPDATE_COMPETITION_STAGE'
+  | 'UPDATE_COMPETITION_TEAM_REQUEST'
+  | 'UPDATE_DATASET'
+  | 'UPDATE_DATASET_MEMBER'
+  | 'UPDATE_DATASET_VERSION'
   | 'UPDATE_EVENT'
   | 'UPDATE_FORUM'
   | 'UPDATE_OAUTH_2_CONFIG'
   | 'UPDATE_ORGANIZATION'
   | 'UPDATE_ORGANIZATION_MEMBERSHIP'
   | 'UPDATE_PROJECT_VERSION'
+  | 'UPDATE_PROJECT_VERSION_APPROVAL'
   | 'UPDATE_PROJECT_VERSION_FILE'
   | 'UPDATE_TOPIC'
   | 'UPDATE_USER'
@@ -163,6 +197,12 @@ export type ActivityEdge = {
   node: Activity;
 };
 
+export type ActivityKind =
+  | 'ALL'
+  | 'COMPETITION'
+  | 'DATASET'
+  | '%future added value';
+
 export type ActivityVisibility =
   /** Activity is visible by every authenticated user. */
   | 'AUTHENTICATED'
@@ -170,6 +210,13 @@ export type ActivityVisibility =
   | 'MEMBERS'
   /** Activity is visible by everyone, even unauthenticated users. */
   | 'UNAUTHENTICATED'
+  | '%future added value';
+
+export type ApprovalFilter =
+  | 'AWAITING_ANY'
+  | 'AWAITING_MINE'
+  | 'HAS_ANY'
+  | 'HAS_MINE'
   | '%future added value';
 
 export type ArchiveKind =
@@ -182,6 +229,22 @@ export type Badge =
   | 'BIG_PARIS_2021'
   /** BIG Quantum Hackathon by the Chicago Quantum Exchange & QuantX, Sept 2023, Chicago (USA) */
   | 'CHICAGO_2023'
+  /** Winner of the EPRI 2025 Challenge */
+  | 'EPRI2025_FIRST'
+  /** Runner-Up of the EPRI 2025 Challenge */
+  | 'EPRI2025_SECOND'
+  /** Finalist of the EPRI 2025 Challenge */
+  | 'EPRI2025_THIRD'
+  /** Winner of GIC-2025 JPMorgan Chase Challenge */
+  | 'GIC2025_JPMC'
+  /** Winner of GIC-2025 MITRE Challenge */
+  | 'GIC2025_MITRE'
+  /** Winner of GIC-2025 NeuroQuantum Nexus Challenge */
+  | 'GIC2025_NEURO_QUANTUM'
+  /** Winner GIC-2025 Wells Fargo Challenge */
+  | 'GIC2025_WELLS_FARGO'
+  /** Winner of GIC-2025 The World Bank Challenge */
+  | 'GIC2025_WORLD_BANK'
   /** Quantum Hackathon by QuantX, October 2022, Grenoble (FR) */
   | 'GRENOBLE_2022'
   /** Clinical Trial Optimization Competition 2024 by Ingenii First Prize */
@@ -220,6 +283,8 @@ export type Badge =
   | 'QINNOVISION_2025_FINALIST'
   /** QInnovision Challenge 2024-2025 Winner! */
   | 'QINNOVISION_2025_WINNER'
+  /** QML Summer School 2025 */
+  | 'QML_SUMMER_SCHOOL_2025'
   /** Badge awarded upon first submission */
   | 'QUANTUM_PIONEER'
   /** Quantum Trading Oracle  – 1st Place */
@@ -281,11 +346,20 @@ export type BlogArticleViewerCanArgs = {
 export type BlogArticleAuthorConnection = {
   __typename?: 'BlogArticleAuthorConnection';
   /** A list of edges. */
-  edges: Array<EntityEdge>;
+  edges: Array<BlogArticleAuthorConnectionEdge>;
   /** A list of nodes. */
   nodes: Array<Entity>;
   /** Information to aid in pagination. */
   pageInfo: PageInfo;
+};
+
+/** An edge in a connection. */
+export type BlogArticleAuthorConnectionEdge = {
+  __typename?: 'BlogArticleAuthorConnectionEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: Entity;
 };
 
 export type BlogArticleConnection = {
@@ -372,34 +446,49 @@ export type Competition = ForumOwner & Node & Subscribable & {
   __typename?: 'Competition';
   banner: Maybe<Scalars['Url']['output']>;
   createdAt: Scalars['DateTime']['output'];
+  currentStage: CompetitionStage;
+  datasets: CompetitionDatasetConnection;
   description: Maybe<Scalars['String']['output']>;
   entityRuleAgreements: CompetitionRuleAgreementConnection;
   entitySubscription: Maybe<SubjectSubscription>;
   forum: Forum;
   forumOwnerKind: ForumOwnerKind;
-  grantHostSubmissionAccess: Scalars['Boolean']['output'];
   hasLeaderboard: Scalars['Boolean']['output'];
+  hasSubmissions: Scalars['Boolean']['output'];
   host: Entity;
   id: Scalars['ID']['output'];
   isPrivate: Scalars['Boolean']['output'];
+  jury: CompetitionJuryConnection;
   latestRule: CompetitionRule;
   leaderboard: SubmissionRankingConnection;
   members: CompetitionMembershipConnection;
   membership: Maybe<CompetitionMembership>;
-  noCode: Scalars['Boolean']['output'];
   requiresApproval: Scalars['Boolean']['output'];
   rules: CompetitionRuleConnection;
   shortDescription: Scalars['String']['output'];
+  /** @deprecated Use currentStage.showMetric instead */
+  showMetric: Scalars['Boolean']['output'];
   slug: Scalars['String']['output'];
+  stage: Maybe<CompetitionStage>;
+  stages: CompetitionStageConnection;
   submission: Maybe<Submission>;
-  submissionPreamble: Maybe<Scalars['String']['output']>;
   submissions: SubmissionConnection;
   tags: CompetitionTagConnection;
+  teamRequests: CompetitionTeamRequestConnection;
   thumbnail: Maybe<Scalars['Url']['output']>;
+  timeline: Maybe<Timeline>;
   title: Scalars['String']['output'];
   useCase: UseCase;
   viewerCan: Scalars['Boolean']['output'];
   visibility: ActivityVisibility;
+};
+
+
+export type CompetitionDatasetsArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -418,11 +507,20 @@ export type CompetitionEntitySubscriptionArgs = {
 };
 
 
+export type CompetitionJuryArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type CompetitionLeaderboardArgs = {
   after: InputMaybe<Scalars['String']['input']>;
   before: InputMaybe<Scalars['String']['input']>;
   first: InputMaybe<Scalars['Int']['input']>;
   last: InputMaybe<Scalars['Int']['input']>;
+  stage: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -448,6 +546,21 @@ export type CompetitionRulesArgs = {
 };
 
 
+export type CompetitionStageArgs = {
+  stage: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type CompetitionStagesArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  hasLeaderboard: InputMaybe<Scalars['Boolean']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
+  requiresApproval: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+
 export type CompetitionSubmissionArgs = {
   entity: InputMaybe<Scalars['UsernameOrID']['input']>;
 };
@@ -455,11 +568,12 @@ export type CompetitionSubmissionArgs = {
 
 export type CompetitionSubmissionsArgs = {
   after: InputMaybe<Scalars['String']['input']>;
+  approvalFilter: InputMaybe<ApprovalFilter>;
   before: InputMaybe<Scalars['String']['input']>;
   entityId: InputMaybe<Scalars['ID']['input']>;
   first: InputMaybe<Scalars['Int']['input']>;
   last: InputMaybe<Scalars['Int']['input']>;
-  needsApproval: InputMaybe<Scalars['Boolean']['input']>;
+  stage: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -467,6 +581,15 @@ export type CompetitionTagsArgs = {
   after: InputMaybe<Scalars['String']['input']>;
   before: InputMaybe<Scalars['String']['input']>;
   first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type CompetitionTeamRequestsArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  isOrganization: InputMaybe<Scalars['Boolean']['input']>;
   last: InputMaybe<Scalars['Int']['input']>;
 };
 
@@ -486,6 +609,25 @@ export type CompetitionConnection = {
   pageInfo: PageInfo;
 };
 
+export type CompetitionDatasetConnection = {
+  __typename?: 'CompetitionDatasetConnection';
+  /** A list of edges. */
+  edges: Array<CompetitionDatasetConnectionEdge>;
+  /** A list of nodes. */
+  nodes: Array<Dataset>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+};
+
+/** An edge in a connection. */
+export type CompetitionDatasetConnectionEdge = {
+  __typename?: 'CompetitionDatasetConnectionEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: Dataset;
+};
+
 /** An edge in a connection. */
 export type CompetitionEdge = {
   __typename?: 'CompetitionEdge';
@@ -495,13 +637,36 @@ export type CompetitionEdge = {
   node: Competition;
 };
 
+export type CompetitionJuryConnection = {
+  __typename?: 'CompetitionJuryConnection';
+  /** A list of edges. */
+  edges: Array<CompetitionJuryEdge>;
+  /** A list of nodes. */
+  nodes: Array<Entity>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+};
+
+/** An edge in a connection. */
+export type CompetitionJuryEdge = {
+  __typename?: 'CompetitionJuryEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: Entity;
+  selectedOn: Scalars['DateTime']['output'];
+};
+
 export type CompetitionMembership = Node & {
   __typename?: 'CompetitionMembership';
+  asEntity: Entity;
   competition: Competition;
+  createdAt: Scalars['DateTime']['output'];
   entity: Entity;
   id: Scalars['ID']['output'];
   kind: CompetitionMembershipKind;
   ruleAgreements: CompetitionRuleAgreementConnection;
+  teamRequest: Maybe<CompetitionTeamRequest>;
   viewerCan: Scalars['Boolean']['output'];
 };
 
@@ -604,6 +769,92 @@ export type CompetitionRuleEdge = {
   node: CompetitionRule;
 };
 
+export type CompetitionScoringCriterion = Node & {
+  __typename?: 'CompetitionScoringCriterion';
+  competition: Competition;
+  description: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  order: Scalars['Int']['output'];
+  stage: CompetitionStage;
+  title: Scalars['String']['output'];
+  viewerCan: Scalars['Boolean']['output'];
+  weight: Scalars['Float']['output'];
+};
+
+
+export type CompetitionScoringCriterionViewerCanArgs = {
+  action: Action;
+  asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+};
+
+export type CompetitionStage = Node & {
+  __typename?: 'CompetitionStage';
+  competition: Competition;
+  createdAt: Scalars['DateTime']['output'];
+  hasLeaderboard: Scalars['Boolean']['output'];
+  id: Scalars['ID']['output'];
+  isActive: Scalars['Boolean']['output'];
+  leaderboard: SubmissionRankingConnection;
+  noCode: Scalars['Boolean']['output'];
+  privateApprovals: Scalars['Boolean']['output'];
+  requiresApproval: Scalars['Boolean']['output'];
+  scoringCriteria: Array<CompetitionScoringCriterion>;
+  seq: Scalars['Int']['output'];
+  showMetric: Scalars['Boolean']['output'];
+  submission: Maybe<Submission>;
+  submissionPreamble: Maybe<Scalars['String']['output']>;
+  submissions: SubmissionConnection;
+  useJuryScore: Scalars['Boolean']['output'];
+  validUntil: Maybe<Scalars['DateTime']['output']>;
+  viewerCan: Scalars['Boolean']['output'];
+};
+
+
+export type CompetitionStageLeaderboardArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type CompetitionStageSubmissionArgs = {
+  entity: InputMaybe<Scalars['UsernameOrID']['input']>;
+};
+
+
+export type CompetitionStageSubmissionsArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type CompetitionStageViewerCanArgs = {
+  action: Action;
+  asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+};
+
+export type CompetitionStageConnection = {
+  __typename?: 'CompetitionStageConnection';
+  /** A list of edges. */
+  edges: Array<CompetitionStageEdge>;
+  /** A list of nodes. */
+  nodes: Array<CompetitionStage>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+};
+
+/** An edge in a connection. */
+export type CompetitionStageEdge = {
+  __typename?: 'CompetitionStageEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: CompetitionStage;
+};
+
 export type CompetitionSubscription = Node & SubjectSubscription & {
   __typename?: 'CompetitionSubscription';
   competition: Competition;
@@ -631,6 +882,45 @@ export type CompetitionTagConnection = {
   pageInfo: PageInfo;
 };
 
+export type CompetitionTeamRequest = Node & {
+  __typename?: 'CompetitionTeamRequest';
+  competition: Competition;
+  createdAt: Scalars['DateTime']['output'];
+  entity: Entity;
+  id: Scalars['ID']['output'];
+  lastMessageAt: Maybe<Scalars['DateTime']['output']>;
+  needs: Scalars['String']['output'];
+  skills: Scalars['String']['output'];
+  timezone: Scalars['TimeZone']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+  viewerCan: Scalars['Boolean']['output'];
+};
+
+
+export type CompetitionTeamRequestViewerCanArgs = {
+  action: Action;
+  asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+};
+
+export type CompetitionTeamRequestConnection = {
+  __typename?: 'CompetitionTeamRequestConnection';
+  /** A list of edges. */
+  edges: Array<CompetitionTeamRequestEdge>;
+  /** A list of nodes. */
+  nodes: Array<CompetitionTeamRequest>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+};
+
+/** An edge in a connection. */
+export type CompetitionTeamRequestEdge = {
+  __typename?: 'CompetitionTeamRequestEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: CompetitionTeamRequest;
+};
+
 export type CreateBlogArticleInput = {
   authorsIds: Array<Scalars['ID']['input']>;
   content: Scalars['String']['input'];
@@ -649,17 +939,65 @@ export type CreateCommentInput = {
 export type CreateCompetitionInput = {
   banner: InputMaybe<Scalars['Upload']['input']>;
   description: InputMaybe<Scalars['String']['input']>;
-  grantHostSubmissionAccess: InputMaybe<Scalars['Boolean']['input']>;
-  hasLeaderboard: InputMaybe<Scalars['Boolean']['input']>;
+  /** Enables no-code system on competition. Requires jury system to work. */
   noCode: Scalars['Boolean']['input'];
-  requiresApproval: InputMaybe<Scalars['Boolean']['input']>;
+  /**
+   * Only allow the competition host, the reviewer and the submission author to see the approval
+   * score.
+   */
+  privateApprovals: Scalars['Boolean']['input'];
+  /** Enables jury system on competition */
+  requiresApproval: Scalars['Boolean']['input'];
   shortDescription: Scalars['String']['input'];
+  /** Show automated use-case metric. */
+  showMetric: Scalars['Boolean']['input'];
   slug: Scalars['String']['input'];
+  /** Message shown to participants before they submit a solution. */
   submissionPreamble: InputMaybe<Scalars['String']['input']>;
   tagIds: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
   thumbnail: InputMaybe<Scalars['Upload']['input']>;
+  timeline: InputMaybe<CreateTimelineInput>;
   title: Scalars['String']['input'];
+  /** Use average jury score instead of automated use-case metric. Requires jury system to work. */
+  useJuryScore: Scalars['Boolean']['input'];
   visibility: ActivityVisibility;
+};
+
+export type CreateCompetitionStageInput = {
+  /** Enables no-code system on competition. Requires jury system to work. */
+  noCode: Scalars['Boolean']['input'];
+  /**
+   * Only allow the competition host, the reviewer and the submission author to see the approval
+   * score.
+   */
+  privateApprovals: Scalars['Boolean']['input'];
+  /** Enables jury system on competition */
+  requiresApproval: Scalars['Boolean']['input'];
+  /** Show automated use-case metric. */
+  showMetric: Scalars['Boolean']['input'];
+  /** Message shown to participants before they submit a solution. */
+  submissionPreamble: InputMaybe<Scalars['String']['input']>;
+  /** Use average jury score instead of automated use-case metric. Requires jury system to work. */
+  useJuryScore: Scalars['Boolean']['input'];
+};
+
+export type CreateCompetitionTeamRequestInput = {
+  needs: Scalars['String']['input'];
+  skills: Scalars['String']['input'];
+  timezone: Scalars['TimeZone']['input'];
+};
+
+export type CreateDatasetInput = {
+  localSlug: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  private: Scalars['Boolean']['input'];
+  shortDescription: InputMaybe<Scalars['String']['input']>;
+  tags: Array<Scalars['ID']['input']>;
+};
+
+export type CreateDatasetVersionInput = {
+  datasetVersionId: InputMaybe<Scalars['ID']['input']>;
+  version: InputMaybe<Scalars['Semver']['input']>;
 };
 
 export type CreateEventInput = {
@@ -714,10 +1052,402 @@ export type CreateTagInput = {
   name: Scalars['String']['input'];
 };
 
+export type CreateTimelineInput = {
+  endDate: Scalars['NaiveDate']['input'];
+  online: Scalars['Boolean']['input'];
+  startDate: Scalars['NaiveDate']['input'];
+  steps: Array<TimelineStepInput>;
+  timezone: Scalars['TimeZone']['input'];
+};
+
 export type CreateTopicInput = {
   description: InputMaybe<Scalars['String']['input']>;
   title: Scalars['String']['input'];
   url: InputMaybe<Scalars['Url']['input']>;
+};
+
+export type Doi = {
+  __typename?: 'DOI';
+  full: Scalars['String']['output'];
+  short: Maybe<Scalars['String']['output']>;
+  url: Scalars['Url']['output'];
+};
+
+export type Dataset = ForumOwner & Node & Votable & {
+  __typename?: 'Dataset';
+  analytics: DatasetAnalytics;
+  competitions: DatasetCompetitionConnection;
+  createdAt: Scalars['DateTime']['output'];
+  forum: Forum;
+  forumOwnerKind: ForumOwnerKind;
+  id: Scalars['ID']['output'];
+  latestVersion: Maybe<DatasetVersion>;
+  localSlug: Scalars['String']['output'];
+  members: DatasetMembershipConnection;
+  name: Scalars['String']['output'];
+  owner: Entity;
+  private: Scalars['Boolean']['output'];
+  publiclyIdentified: Scalars['Boolean']['output'];
+  shortDescription: Maybe<Scalars['String']['output']>;
+  slug: Scalars['String']['output'];
+  tags: DatasetTagConnection;
+  version: Maybe<DatasetVersion>;
+  versions: DatasetVersionConnection;
+  viewerCan: Scalars['Boolean']['output'];
+  voted: Maybe<EntityVote>;
+  voterCount: Scalars['Int']['output'];
+  voters: VotersConnection;
+  votes: Scalars['Int']['output'];
+};
+
+
+export type DatasetCompetitionsArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
+  search: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type DatasetMembersArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
+  search: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type DatasetTagsArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type DatasetVersionArgs = {
+  major: Scalars['Int']['input'];
+  minor: Scalars['Int']['input'];
+  patch: Scalars['Int']['input'];
+};
+
+
+export type DatasetVersionsArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  filters: InputMaybe<DatasetVersionQueryFilters>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type DatasetViewerCanArgs = {
+  action: Action;
+  asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+};
+
+
+export type DatasetVotersArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type DatasetAnalytics = {
+  __typename?: 'DatasetAnalytics';
+  downloadCount: Scalars['Int']['output'];
+  fileSize: Scalars['Int']['output'];
+  rowCount: Scalars['Int']['output'];
+};
+
+export type DatasetCompetitionConnection = {
+  __typename?: 'DatasetCompetitionConnection';
+  /** A list of edges. */
+  edges: Array<DatasetCompetitionConnectionEdge>;
+  /** A list of nodes. */
+  nodes: Array<Competition>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+};
+
+/** An edge in a connection. */
+export type DatasetCompetitionConnectionEdge = {
+  __typename?: 'DatasetCompetitionConnectionEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: Competition;
+};
+
+export type DatasetConnection = {
+  __typename?: 'DatasetConnection';
+  /** A list of edges. */
+  edges: Array<DatasetEdge>;
+  /** A list of nodes. */
+  nodes: Array<Dataset>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+  size: DatasetSize;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type DatasetConnectionOrder =
+  | 'CREATED_AT'
+  | 'DOWNLOADS'
+  | 'TRENDING'
+  | '%future added value';
+
+export type DatasetConnectionSortDirection =
+  | 'ASCENDING'
+  | 'DESCENDING'
+  | '%future added value';
+
+/** An edge in a connection. */
+export type DatasetEdge = {
+  __typename?: 'DatasetEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: Dataset;
+};
+
+export type DatasetMembershipConnection = {
+  __typename?: 'DatasetMembershipConnection';
+  /** A list of edges. */
+  edges: Array<DatasetMembershipConnectionEdge>;
+  /** A list of nodes. */
+  nodes: Array<Entity>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+};
+
+/** An edge in a connection. */
+export type DatasetMembershipConnectionEdge = {
+  __typename?: 'DatasetMembershipConnectionEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: Entity;
+};
+
+/** At least one field must be set. */
+export type DatasetQueryFilterSize = {
+  high: InputMaybe<Scalars['Int']['input']>;
+  low: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type DatasetQueryFilters = {
+  order: DatasetConnectionOrder;
+  search: InputMaybe<Scalars['String']['input']>;
+  size: InputMaybe<DatasetQueryFilterSize>;
+  sortDirection: DatasetConnectionSortDirection;
+  tags: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type DatasetSize = {
+  __typename?: 'DatasetSize';
+  high: Scalars['Int']['output'];
+  low: Scalars['Int']['output'];
+};
+
+export type DatasetTagConnection = {
+  __typename?: 'DatasetTagConnection';
+  /** A list of edges. */
+  edges: Array<DatasetTagConnectionEdge>;
+  /** A list of nodes. */
+  nodes: Array<Tag>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in a connection. */
+export type DatasetTagConnectionEdge = {
+  __typename?: 'DatasetTagConnectionEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: Tag;
+};
+
+export type DatasetVersion = Node & {
+  __typename?: 'DatasetVersion';
+  analytics: DatasetAnalytics;
+  authors: DatasetVersionAuthorConnection;
+  createdAt: Scalars['DateTime']['output'];
+  dataset: Dataset;
+  description: Scalars['String']['output'];
+  doi: Maybe<Doi>;
+  fileByPartitionNum: Maybe<DatasetVersionFile>;
+  files: DatasetVersionFileConnection;
+  id: Scalars['ID']['output'];
+  license: Maybe<Scalars['String']['output']>;
+  publishable: Scalars['Boolean']['output'];
+  publishedAt: Maybe<Scalars['DateTime']['output']>;
+  records: Array<Scalars['JSON']['output']>;
+  rows: Scalars['Int']['output'];
+  schema: Maybe<Scalars['JSON']['output']>;
+  size: Scalars['Int']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+  version: Scalars['Semver']['output'];
+  viewerCan: Scalars['Boolean']['output'];
+};
+
+
+export type DatasetVersionAuthorsArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
+  search: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type DatasetVersionFileByPartitionNumArgs = {
+  partitionNum: Scalars['Int']['input'];
+};
+
+
+export type DatasetVersionFilesArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type DatasetVersionRecordsArgs = {
+  limit?: Scalars['Int']['input'];
+  offset?: Scalars['Int']['input'];
+};
+
+
+export type DatasetVersionViewerCanArgs = {
+  action: Action;
+  asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+};
+
+export type DatasetVersionAuthor = {
+  displayName: Scalars['String']['output'];
+};
+
+export type DatasetVersionAuthorConnection = {
+  __typename?: 'DatasetVersionAuthorConnection';
+  /** A list of edges. */
+  edges: Array<DatasetVersionAuthorConnectionEdge>;
+  /** A list of nodes. */
+  nodes: Array<DatasetVersionAuthor>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in a connection. */
+export type DatasetVersionAuthorConnectionEdge = {
+  __typename?: 'DatasetVersionAuthorConnectionEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: DatasetVersionAuthor;
+};
+
+export type DatasetVersionAuthorInput = {
+  registered: InputMaybe<Scalars['UsernameOrID']['input']>;
+  unregistered: InputMaybe<UnregisteredDatasetVersionAuthorInput>;
+};
+
+export type DatasetVersionConnection = {
+  __typename?: 'DatasetVersionConnection';
+  /** A list of edges. */
+  edges: Array<DatasetVersionEdge>;
+  /** A list of nodes. */
+  nodes: Array<DatasetVersion>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type DatasetVersionConnectionOrder =
+  | 'CREATED_AT'
+  | 'PUBLISHED_AT'
+  | 'UPDATED_AT'
+  | '%future added value';
+
+export type DatasetVersionConnectionSortDirection =
+  | 'ASCENDING'
+  | 'DESCENDING'
+  | '%future added value';
+
+/** An edge in a connection. */
+export type DatasetVersionEdge = {
+  __typename?: 'DatasetVersionEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: DatasetVersion;
+};
+
+export type DatasetVersionFile = Node & {
+  __typename?: 'DatasetVersionFile';
+  datasetVersion: DatasetVersion;
+  id: Scalars['ID']['output'];
+  partitionNum: Scalars['Int']['output'];
+  records: Array<Scalars['JSON']['output']>;
+  rows: Scalars['Int']['output'];
+  size: Scalars['Int']['output'];
+  url: Scalars['Url']['output'];
+  viewerCan: Scalars['Boolean']['output'];
+};
+
+
+export type DatasetVersionFileRecordsArgs = {
+  limit?: Scalars['Int']['input'];
+  offset?: Scalars['Int']['input'];
+};
+
+
+export type DatasetVersionFileViewerCanArgs = {
+  action: Action;
+  asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+};
+
+export type DatasetVersionFileConnection = {
+  __typename?: 'DatasetVersionFileConnection';
+  /** A list of edges. */
+  edges: Array<DatasetVersionFileEdge>;
+  /** A list of nodes. */
+  nodes: Array<DatasetVersionFile>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+};
+
+/** An edge in a connection. */
+export type DatasetVersionFileEdge = {
+  __typename?: 'DatasetVersionFileEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: DatasetVersionFile;
+};
+
+export type DatasetVersionQueryFilters = {
+  order: DatasetVersionConnectionOrder;
+  published: InputMaybe<Scalars['Boolean']['input']>;
+  sortDirection: DatasetVersionConnectionSortDirection;
+};
+
+export type DatasetVersionStatus =
+  | 'GENERATING_DOI'
+  | 'IDLE'
+  | '%future added value';
+
+export type DatasetVersionUpdate = {
+  __typename?: 'DatasetVersionUpdate';
+  datasetVersion: DatasetVersion;
+  status: DatasetVersionStatus;
 };
 
 export type DeletedComment = {
@@ -745,6 +1475,7 @@ export type Entity = {
   badges: EntityBadgeConnection;
   bio: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
+  datasets: DatasetConnection;
   displayName: Scalars['String']['output'];
   github: Maybe<Scalars['String']['output']>;
   googleScholar: Maybe<Scalars['String']['output']>;
@@ -773,6 +1504,15 @@ export type EntityBadgesArgs = {
 };
 
 
+export type EntityDatasetsArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  filters: InputMaybe<DatasetQueryFilters>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type EntityProjectVersionApprovalsArgs = {
   after: InputMaybe<Scalars['String']['input']>;
   before: InputMaybe<Scalars['String']['input']>;
@@ -793,6 +1533,7 @@ export type EntitySubjectSubscriptionsArgs = {
 
 export type EntitySubmissionsArgs = {
   after: InputMaybe<Scalars['String']['input']>;
+  allStages: InputMaybe<Scalars['Boolean']['input']>;
   before: InputMaybe<Scalars['String']['input']>;
   competitionId: InputMaybe<Scalars['ID']['input']>;
   first: InputMaybe<Scalars['Int']['input']>;
@@ -807,6 +1548,7 @@ export type EntityViewerCanArgs = {
 
 export type EntityActivitiesConnectionKind =
   | 'COMMENT'
+  | 'DATASET'
   | 'SUBMISSION'
   | 'TOPIC'
   | '%future added value';
@@ -881,7 +1623,6 @@ export type Event = ForumOwner & Node & {
   host: Entity;
   id: Scalars['ID']['output'];
   invitations: EventInvitationConnection;
-  invitationsCount: Scalars['Int']['output'];
   invite: EventPublicInvite;
   isPrivate: Scalars['Boolean']['output'];
   latestRule: EventRule;
@@ -1029,6 +1770,7 @@ export type EventInvitationConnection = {
   nodes: Array<EventInvitation>;
   /** Information to aid in pagination. */
   pageInfo: PageInfo;
+  totalCount: Scalars['Int']['output'];
 };
 
 /** An edge in a connection. */
@@ -1356,6 +2098,7 @@ export type ForumOwnerViewerCanArgs = {
 export type ForumOwnerKind =
   | 'BLOG'
   | 'COMPETITION'
+  | 'DATASET'
   | 'EVENT'
   | 'TOP_LEVEL'
   | '%future added value';
@@ -1418,7 +2161,10 @@ export type LoginUserInput = {
 export type Mutation = {
   __typename?: 'Mutation';
   acceptEventInvite: EventInvite;
+  addCompetitionJury: CompetitionJuryEdge;
   addCompetitionMember: CompetitionMembershipEdge;
+  addDatasetCompetition: DatasetCompetitionConnectionEdge;
+  addDatasetMember: DatasetMembershipConnectionEdge;
   addEventCompetition: EventCompetitionEdge;
   addEventMember: EventMembershipEdge;
   agreeToCompetitionRule: CompetitionRuleAgreement;
@@ -1426,11 +2172,36 @@ export type Mutation = {
   awardBadge: EntityBadgeEdge;
   checkEmailSignupVerification: EmailSignupRequest;
   checkOauth2Auth: Oauth2AuthResponse;
+  /**
+   * Finalize the upload of a file attached to a dataset version.
+   * Must be called exactly one time.
+   * If not called, all uploaded files get garbage collected 6 hours after
+   * the last part was uploaded.
+   */
+  completeDatasetVersionFile: DatasetVersionFile;
   completeProjectVersionFileMultipartUpload: ProjectVersionFile;
   createBlogArticle: BlogArticleEdge;
   createCommentForComment: CommentEdge;
   createCommentForTopic: CommentEdge;
   createCompetition: CompetitionEdge;
+  /**
+   * Archive currently active leaderboard into a new stage, creating a new empty leaderboard.
+   * Returns previously active leaderboard.
+   */
+  createCompetitionStage: CompetitionStageEdge;
+  createCompetitionTeamRequest: CompetitionTeamRequestEdge;
+  createDataset: Dataset;
+  /**
+   * Creates a new dataset version:
+   * inheriting and bumping SemVer with a payload,
+   * or creating a fresh version if none provided.
+   */
+  createDatasetVersion: DatasetVersion;
+  /**
+   * Attach a file to a dataset version. Returns an upload ID which you can use
+   * to call `uploadDatasetVersionFilePart`.
+   */
+  createDatasetVersionFile: Scalars['ID']['output'];
   createEvent: EventEdge;
   createForum: ForumEdge;
   createOauth2AuthRequest: Scalars['Url']['output'];
@@ -1446,6 +2217,9 @@ export type Mutation = {
   deleteBlogArticle: Scalars['ID']['output'];
   deleteComment: Scalars['ID']['output'];
   deleteCompetition: Scalars['ID']['output'];
+  deleteCompetitionTeamRequest: Scalars['ID']['output'];
+  deleteDataset: Scalars['ID']['output'];
+  deleteDatasetVersion: Scalars['ID']['output'];
   deleteEvent: Scalars['ID']['output'];
   deleteForum: Scalars['ID']['output'];
   deleteOauth2Config: Scalars['ID']['output'];
@@ -1455,6 +2229,7 @@ export type Mutation = {
   deleteTopic: Scalars['ID']['output'];
   deleteUser: Scalars['ID']['output'];
   fetchWebsiteMetadata: WebsiteMetadata;
+  finishDatasetVersionUpload: DatasetVersion;
   finishUploadFile: FinishUploadFile;
   generateEventInviteCode: EventPublicInvite;
   initUploadFile: InitUploadFile;
@@ -1466,22 +2241,39 @@ export type Mutation = {
   oauth2Authorize: Oauth2AuthorizeOutput;
   oauth2Refresh: Oauth2TokenOutput;
   oauth2Token: Oauth2TokenOutput;
+  publishDatasetVersion: DatasetVersion;
   publishVote: VotableEdge;
+  reevaluateCompetitionStage: CompetitionStageEdge;
+  remindEventInvitees: Event;
+  removeCompetitionJury: Entity;
   removeCompetitionMember: Scalars['ID']['output'];
+  /**
+   * Withdraw currently active leaderboard if it is still empty, making last stage the currently
+   * active leaderboard. Useful when a new stage was created by error.
+   * Returns previously staged leaderboard that now became active.
+   */
+  removeCompetitionStage: Competition;
+  removeDatasetCompetition: Competition;
+  removeDatasetMember: Scalars['ID']['output'];
   removeEventCompetition: Scalars['ID']['output'];
   removeEventInviteCode: EventPublicInvite;
   removeEventMember: Scalars['ID']['output'];
   removeOrganizationMember: Scalars['ID']['output'];
   resendEmailSignupVerification: EmailSignupRequest;
+  resetDraftDatasetVersion: DatasetVersion;
   resetPassword: Scalars['Boolean']['output'];
   resetVote: VotableEdge;
+  sendCompetitionTeamRequestMessage: CompetitionTeamRequest;
   sendEmailSignupVerification: EmailSignupRequest;
   setCompetitionOrderingPriority: CompetitionEdge;
+  setEventOrderingPriority: EventEdge;
   setUserIsBanned: User;
   setUserNotificationSubscription: UserEdge;
   signupUser: UserEdge;
+  startDatasetVersionUpload: DatasetVersion;
   subscribeToSubject: SubjectSubscriptionEdge;
   transferCompetitionOwnership: Array<CompetitionMembershipEdge>;
+  transferDatasetOwnership: Dataset;
   transferEventOwnership: Array<EventMembershipEdge>;
   transferOrganizationOwnership: Array<OrganizationMembershipEdge>;
   unsubscribeFromAllNotifications: UserEdge;
@@ -1490,19 +2282,32 @@ export type Mutation = {
   updateBlogArticle: BlogArticleEdge;
   updateComment: CommentEdge;
   updateCompetition: CompetitionEdge;
+  updateCompetitionMembership: CompetitionMembership;
+  updateCompetitionStage: CompetitionStageEdge;
+  updateCompetitionTeamRequest: CompetitionTeamRequest;
+  updateDataset: Dataset;
+  updateDatasetVersion: DatasetVersion;
   updateEvent: EventEdge;
   updateEventAgenda: EventEdge;
   updateForum: ForumEdge;
   updateOauth2Config: Oauth2ConfigEdge;
   updateOrganization: OrganizationEdge;
   updateOrganizationMembership: OrganizationMembershipEdge;
+  updateProjectVersionApproval: ProjectVersionApprovalEdge;
   updateTopic: Topic;
   updateUser: UserEdge;
+  /**
+   * Upload a part of the file that was attached to a dataset version.
+   * Returns a short-lived URL that you can HTTP PUT.
+   * May be called any number of times, but at least once.
+   */
+  uploadDatasetVersionFilePart: Scalars['Url']['output'];
   /**
    * Submit files for a "no-code" competition. This feature is not available for regular
    * competitions.
    */
   uploadNoCodeSubmissionVersion: ProjectVersionEdge;
+  uploadProjectVersionFilePart: Scalars['Url']['output'];
   validateSubmissionVersion: ProjectVersionEdge;
   validateUseCaseVersion: ProjectVersionEdge;
   withdrawBadge: Scalars['ID']['output'];
@@ -1516,8 +2321,26 @@ export type MutationAcceptEventInviteArgs = {
 };
 
 
+export type MutationAddCompetitionJuryArgs = {
+  competitionId: Scalars['ID']['input'];
+  entityId: Scalars['ID']['input'];
+};
+
+
 export type MutationAddCompetitionMemberArgs = {
   competitionId: Scalars['ID']['input'];
+  entityId: Scalars['ID']['input'];
+};
+
+
+export type MutationAddDatasetCompetitionArgs = {
+  competitionId: Scalars['ID']['input'];
+  datasetId: Scalars['ID']['input'];
+};
+
+
+export type MutationAddDatasetMemberArgs = {
+  datasetId: Scalars['ID']['input'];
   entityId: Scalars['ID']['input'];
 };
 
@@ -1563,6 +2386,12 @@ export type MutationCheckOauth2AuthArgs = {
 };
 
 
+export type MutationCompleteDatasetVersionFileArgs = {
+  datasetVersionFileId: Scalars['ID']['input'];
+  eTags: Array<Scalars['String']['input']>;
+};
+
+
 export type MutationCompleteProjectVersionFileMultipartUploadArgs = {
   eTags: Array<Scalars['String']['input']>;
   id: Scalars['ID']['input'];
@@ -1589,6 +2418,36 @@ export type MutationCreateCommentForTopicArgs = {
 
 export type MutationCreateCompetitionArgs = {
   input: CreateCompetitionInput;
+};
+
+
+export type MutationCreateCompetitionStageArgs = {
+  competitionId: Scalars['ID']['input'];
+  input: CreateCompetitionStageInput;
+};
+
+
+export type MutationCreateCompetitionTeamRequestArgs = {
+  competitionId: Scalars['ID']['input'];
+  input: CreateCompetitionTeamRequestInput;
+};
+
+
+export type MutationCreateDatasetArgs = {
+  asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+  input: CreateDatasetInput;
+};
+
+
+export type MutationCreateDatasetVersionArgs = {
+  datasetId: Scalars['ID']['input'];
+  input: InputMaybe<CreateDatasetVersionInput>;
+};
+
+
+export type MutationCreateDatasetVersionFileArgs = {
+  datasetVersionId: Scalars['ID']['input'];
+  partitionNum: Scalars['Int']['input'];
 };
 
 
@@ -1624,13 +2483,12 @@ export type MutationCreatePasswordResetArgs = {
 
 
 export type MutationCreateProjectVersionApprovalArgs = {
+  input: ProjectVersionApprovalInput;
   projectVersionId: Scalars['ID']['input'];
 };
 
 
 export type MutationCreateProjectVersionFileMultipartUploadArgs = {
-  chunks: Array<Scalars['Int']['input']>;
-  contentType: InputMaybe<Scalars['String']['input']>;
   id: Scalars['ID']['input'];
 };
 
@@ -1672,6 +2530,21 @@ export type MutationDeleteCommentArgs = {
 
 export type MutationDeleteCompetitionArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteCompetitionTeamRequestArgs = {
+  competitionTeamRequestId: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteDatasetArgs = {
+  datasetId: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteDatasetVersionArgs = {
+  datasetVersionId: Scalars['ID']['input'];
 };
 
 
@@ -1717,6 +2590,11 @@ export type MutationDeleteUserArgs = {
 
 export type MutationFetchWebsiteMetadataArgs = {
   url: Scalars['Url']['input'];
+};
+
+
+export type MutationFinishDatasetVersionUploadArgs = {
+  datasetVersionId: Scalars['ID']['input'];
 };
 
 
@@ -1774,14 +2652,53 @@ export type MutationOauth2TokenArgs = {
 };
 
 
+export type MutationPublishDatasetVersionArgs = {
+  datasetVersionId: Scalars['ID']['input'];
+};
+
+
 export type MutationPublishVoteArgs = {
   id: Scalars['ID']['input'];
   kind: VoteKind;
 };
 
 
+export type MutationReevaluateCompetitionStageArgs = {
+  competitionId: Scalars['ID']['input'];
+  stage: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type MutationRemindEventInviteesArgs = {
+  eventId: Scalars['ID']['input'];
+};
+
+
+export type MutationRemoveCompetitionJuryArgs = {
+  competitionId: Scalars['ID']['input'];
+  entityId: Scalars['ID']['input'];
+};
+
+
 export type MutationRemoveCompetitionMemberArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationRemoveCompetitionStageArgs = {
+  stageId: Scalars['ID']['input'];
+};
+
+
+export type MutationRemoveDatasetCompetitionArgs = {
+  competitionId: Scalars['ID']['input'];
+  datasetId: Scalars['ID']['input'];
+};
+
+
+export type MutationRemoveDatasetMemberArgs = {
+  datasetId: Scalars['ID']['input'];
+  entityId: Scalars['ID']['input'];
 };
 
 
@@ -1810,6 +2727,11 @@ export type MutationResendEmailSignupVerificationArgs = {
 };
 
 
+export type MutationResetDraftDatasetVersionArgs = {
+  datasetVersionId: Scalars['ID']['input'];
+};
+
+
 export type MutationResetPasswordArgs = {
   input: ResetPasswordInput;
 };
@@ -1820,12 +2742,24 @@ export type MutationResetVoteArgs = {
 };
 
 
+export type MutationSendCompetitionTeamRequestMessageArgs = {
+  competitionTeamRequestId: Scalars['ID']['input'];
+  message: Scalars['String']['input'];
+};
+
+
 export type MutationSendEmailSignupVerificationArgs = {
   input: SendEmailSignupVerificationInput;
 };
 
 
 export type MutationSetCompetitionOrderingPriorityArgs = {
+  id: Scalars['ID']['input'];
+  priority: Scalars['Int']['input'];
+};
+
+
+export type MutationSetEventOrderingPriorityArgs = {
   id: Scalars['ID']['input'];
   priority: Scalars['Int']['input'];
 };
@@ -1848,6 +2782,11 @@ export type MutationSignupUserArgs = {
 };
 
 
+export type MutationStartDatasetVersionUploadArgs = {
+  datasetVersionId: Scalars['ID']['input'];
+};
+
+
 export type MutationSubscribeToSubjectArgs = {
   asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
   subject: Scalars['ID']['input'];
@@ -1857,6 +2796,12 @@ export type MutationSubscribeToSubjectArgs = {
 export type MutationTransferCompetitionOwnershipArgs = {
   competitionId: Scalars['ID']['input'];
   toEntityId: Scalars['ID']['input'];
+};
+
+
+export type MutationTransferDatasetOwnershipArgs = {
+  datasetId: Scalars['ID']['input'];
+  newOwner: Scalars['UsernameOrID']['input'];
 };
 
 
@@ -1900,6 +2845,36 @@ export type MutationUpdateCompetitionArgs = {
 };
 
 
+export type MutationUpdateCompetitionMembershipArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateCompetitionMemberInput;
+};
+
+
+export type MutationUpdateCompetitionStageArgs = {
+  input: UpdateCompetitionStageInput;
+  stageId: Scalars['ID']['input'];
+};
+
+
+export type MutationUpdateCompetitionTeamRequestArgs = {
+  competitionTeamRequestId: Scalars['ID']['input'];
+  input: UpdateCompetitionTeamRequestInput;
+};
+
+
+export type MutationUpdateDatasetArgs = {
+  datasetId: Scalars['ID']['input'];
+  input: UpdateDatasetInput;
+};
+
+
+export type MutationUpdateDatasetVersionArgs = {
+  datasetVersionId: Scalars['ID']['input'];
+  input: UpdateDatasetVersionInput;
+};
+
+
 export type MutationUpdateEventArgs = {
   id: Scalars['ID']['input'];
   input: UpdateEventInput;
@@ -1937,6 +2912,12 @@ export type MutationUpdateOrganizationMembershipArgs = {
 };
 
 
+export type MutationUpdateProjectVersionApprovalArgs = {
+  input: ProjectVersionApprovalInput;
+  projectVersionApprovalId: Scalars['ID']['input'];
+};
+
+
 export type MutationUpdateTopicArgs = {
   id: Scalars['ID']['input'];
   input: UpdateTopicInput;
@@ -1949,10 +2930,25 @@ export type MutationUpdateUserArgs = {
 };
 
 
+export type MutationUploadDatasetVersionFilePartArgs = {
+  datasetVersionFileId: Scalars['ID']['input'];
+  part: Scalars['Int']['input'];
+  partSize: Scalars['Int']['input'];
+};
+
+
 export type MutationUploadNoCodeSubmissionVersionArgs = {
   asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
   competitionId: Scalars['ID']['input'];
   input: UploadNoCodeSubmissionInput;
+};
+
+
+export type MutationUploadProjectVersionFilePartArgs = {
+  chunk: Scalars['Int']['input'];
+  chunkLen: Scalars['Int']['input'];
+  id: Scalars['ID']['input'];
+  uploadId: Scalars['String']['input'];
 };
 
 
@@ -1979,6 +2975,8 @@ export type NotificationKind =
   | 'CONTENT_MENTIONED'
   | 'CREATE_SUBMISSION'
   | 'CREATE_TOPIC'
+  | 'JURY_SELECTED'
+  | 'PROJECT_VERSION_APPROVAL_CREATED'
   | 'PROMOTIONAL_NEWSLETTER'
   | 'REPLY_COMMENT'
   | 'REPLY_TOPIC'
@@ -2131,6 +3129,7 @@ export type Organization = Entity & Node & {
   badges: EntityBadgeConnection;
   bio: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
+  datasets: DatasetConnection;
   displayName: Scalars['String']['output'];
   github: Maybe<Scalars['String']['output']>;
   googleScholar: Maybe<Scalars['String']['output']>;
@@ -2161,6 +3160,15 @@ export type OrganizationBadgesArgs = {
 };
 
 
+export type OrganizationDatasetsArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  filters: InputMaybe<DatasetQueryFilters>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type OrganizationProjectVersionApprovalsArgs = {
   after: InputMaybe<Scalars['String']['input']>;
   before: InputMaybe<Scalars['String']['input']>;
@@ -2181,6 +3189,7 @@ export type OrganizationSubjectSubscriptionsArgs = {
 
 export type OrganizationSubmissionsArgs = {
   after: InputMaybe<Scalars['String']['input']>;
+  allStages: InputMaybe<Scalars['Boolean']['input']>;
   before: InputMaybe<Scalars['String']['input']>;
   competitionId: InputMaybe<Scalars['ID']['input']>;
   first: InputMaybe<Scalars['Int']['input']>;
@@ -2297,6 +3306,7 @@ export type Project = {
   id: Scalars['ID']['output'];
   latest: Maybe<ProjectVersion>;
   name: Scalars['String']['output'];
+  stage: CompetitionStage;
   version: Maybe<ProjectVersion>;
   versions: ProjectVersionConnection;
   viewerCan: Scalars['Boolean']['output'];
@@ -2368,10 +3378,13 @@ export type ProjectVersionViewerCanArgs = {
 
 export type ProjectVersionApproval = Node & {
   __typename?: 'ProjectVersionApproval';
+  accept: Scalars['Boolean']['output'];
   createdAt: Scalars['DateTime']['output'];
   entity: Entity;
   id: Scalars['ID']['output'];
+  notes: Maybe<Scalars['String']['output']>;
   projectVersion: ProjectVersion;
+  scores: Array<ProjectVersionApprovalScore>;
   viewerCan: Scalars['Boolean']['output'];
 };
 
@@ -2379,6 +3392,11 @@ export type ProjectVersionApproval = Node & {
 export type ProjectVersionApprovalViewerCanArgs = {
   action: Action;
   asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+};
+
+export type ProjectVersionApprovalAcceptInput = {
+  notes: InputMaybe<Scalars['String']['input']>;
+  scores: Array<ProjectVersionApprovalScoreInput>;
 };
 
 export type ProjectVersionApprovalConnection = {
@@ -2398,6 +3416,35 @@ export type ProjectVersionApprovalEdge = {
   cursor: Scalars['String']['output'];
   /** The item at the end of the edge */
   node: ProjectVersionApproval;
+};
+
+export type ProjectVersionApprovalInput = {
+  accept: InputMaybe<ProjectVersionApprovalAcceptInput>;
+  reject: InputMaybe<ProjectVersionApprovalRejectInput>;
+};
+
+export type ProjectVersionApprovalRejectInput = {
+  reason: Scalars['String']['input'];
+};
+
+export type ProjectVersionApprovalScore = Node & {
+  __typename?: 'ProjectVersionApprovalScore';
+  competitionScoringCriterion: CompetitionScoringCriterion;
+  id: Scalars['ID']['output'];
+  projectVersionApproval: ProjectVersionApproval;
+  value: Maybe<Scalars['Float']['output']>;
+  viewerCan: Scalars['Boolean']['output'];
+};
+
+
+export type ProjectVersionApprovalScoreViewerCanArgs = {
+  action: Action;
+  asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
+};
+
+export type ProjectVersionApprovalScoreInput = {
+  competitionScoringCriterionId: Scalars['ID']['input'];
+  value: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type ProjectVersionCompressor =
@@ -2488,6 +3535,8 @@ export type Query = {
   blogArticles: BlogArticleConnection;
   competitionBySlug: Maybe<Competition>;
   competitions: CompetitionConnection;
+  datasetBySlug: Maybe<Dataset>;
+  datasets: DatasetConnection;
   entities: EntityConnection;
   entityByUsername: Maybe<Entity>;
   eventBySlug: Maybe<Event>;
@@ -2529,6 +3578,21 @@ export type QueryCompetitionsArgs = {
   first: InputMaybe<Scalars['Int']['input']>;
   last: InputMaybe<Scalars['Int']['input']>;
   search: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryDatasetBySlugArgs = {
+  localSlug: Scalars['String']['input'];
+  owner: Scalars['String']['input'];
+};
+
+
+export type QueryDatasetsArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  filters: InputMaybe<DatasetQueryFilters>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -2606,6 +3670,7 @@ export type QueryOauth2ConfigsArgs = {
 export type QueryTagsArgs = {
   after: InputMaybe<Scalars['String']['input']>;
   before: InputMaybe<Scalars['String']['input']>;
+  filters: InputMaybe<TagQueryFilters>;
   first: InputMaybe<Scalars['Int']['input']>;
   last: InputMaybe<Scalars['Int']['input']>;
 };
@@ -2695,6 +3760,7 @@ export type Submission = Node & Project & {
   latest: Maybe<ProjectVersion>;
   maxEvaluation: Maybe<ProjectVersionEvaluation>;
   name: Scalars['String']['output'];
+  stage: CompetitionStage;
   version: Maybe<ProjectVersion>;
   versions: ProjectVersionConnection;
   viewerCan: Scalars['Boolean']['output'];
@@ -2751,13 +3817,19 @@ export type SubmissionRankingConnection = {
 /** An edge in a connection. */
 export type SubmissionRankingSubmissionEdge = {
   __typename?: 'SubmissionRankingSubmissionEdge';
+  competition: Competition;
   /** A cursor for use in pagination */
   cursor: Scalars['String']['output'];
-  evaluation: ProjectVersionEvaluation;
+  entity: Entity;
   /** The item at the end of the edge */
   node: Submission;
   points: Scalars['Int']['output'];
+  projectVersion: ProjectVersion;
   rank: Scalars['Int']['output'];
+  score: Scalars['Float']['output'];
+  stage: CompetitionStage;
+  submission: Submission;
+  validatedAt: Scalars['DateTime']['output'];
 };
 
 export type Subscribable = {
@@ -2779,12 +3851,18 @@ export type SubscribableViewerCanArgs = {
 
 export type Subscription = {
   __typename?: 'Subscription';
+  datasetVersionUpdate: DatasetVersionUpdate;
   deletedComments: DeletedComment;
   newComments: CommentEdge;
   oauth2Redirect: Oauth2AuthorizationCode;
   projectVersionStatusUpdate: ProjectVersion;
   updatedComments: CommentEdge;
   updatedEntity: Entity;
+};
+
+
+export type SubscriptionDatasetVersionUpdateArgs = {
+  datasetVersionId: Scalars['ID']['input'];
 };
 
 
@@ -2850,6 +3928,60 @@ export type TagEdge = {
   cursor: Scalars['String']['output'];
   /** The item at the end of the edge */
   node: Tag;
+};
+
+export type TagQueryFilters = {
+  activityKind: InputMaybe<ActivityKind>;
+  search: InputMaybe<Scalars['String']['input']>;
+};
+
+export type Timeline = {
+  __typename?: 'Timeline';
+  endDate: Scalars['NaiveDate']['output'];
+  id: Scalars['ID']['output'];
+  online: Scalars['Boolean']['output'];
+  startDate: Scalars['NaiveDate']['output'];
+  steps: TimelineStepConnection;
+  timezone: Scalars['TimeZone']['output'];
+};
+
+
+export type TimelineStepsArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type TimelineStep = {
+  __typename?: 'TimelineStep';
+  date: Scalars['NaiveDate']['output'];
+  id: Scalars['ID']['output'];
+  label: Scalars['String']['output'];
+};
+
+export type TimelineStepConnection = {
+  __typename?: 'TimelineStepConnection';
+  /** A list of edges. */
+  edges: Array<TimelineStepEdge>;
+  /** A list of nodes. */
+  nodes: Array<TimelineStep>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+};
+
+/** An edge in a connection. */
+export type TimelineStepEdge = {
+  __typename?: 'TimelineStepEdge';
+  /** A cursor for use in pagination */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge */
+  node: TimelineStep;
+};
+
+export type TimelineStepInput = {
+  date: Scalars['NaiveDate']['input'];
+  label: Scalars['String']['input'];
 };
 
 export type Topic = Node & Subscribable & Votable & {
@@ -2937,6 +4069,15 @@ export type TopicSubscriptionViewerCanArgs = {
   asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
 };
 
+export type UnregisteredDatasetVersionAuthorInput = {
+  fullName: Scalars['String']['input'];
+};
+
+export type UnregisteredUser = DatasetVersionAuthor & {
+  __typename?: 'UnregisteredUser';
+  displayName: Scalars['String']['output'];
+};
+
 export type UpdateAgendaInput = {
   agenda: InputMaybe<Scalars['JSON']['input']>;
 };
@@ -2959,18 +4100,81 @@ export type UpdateCommentInput = {
 export type UpdateCompetitionInput = {
   banner: InputMaybe<Scalars['Upload']['input']>;
   description: InputMaybe<Scalars['String']['input']>;
-  grantHostSubmissionAccess: InputMaybe<Scalars['Boolean']['input']>;
-  hasLeaderboard: InputMaybe<Scalars['Boolean']['input']>;
+  /** Enables no-code system on competition. Requires jury system to work. */
   noCode: InputMaybe<Scalars['Boolean']['input']>;
+  /**
+   * Only allow the competition host, the reviewer and the submission author to see the approval
+   * score.
+   */
+  privateApprovals: InputMaybe<Scalars['Boolean']['input']>;
+  /** Enables jury system on competition */
   requiresApproval: InputMaybe<Scalars['Boolean']['input']>;
   rules: InputMaybe<Scalars['String']['input']>;
+  scoringCriteria: InputMaybe<Array<UpdateCompetitionScoringCriterionInput>>;
   shortDescription: InputMaybe<Scalars['String']['input']>;
+  /** Show automated use-case metric. */
+  showMetric: InputMaybe<Scalars['Boolean']['input']>;
   slug: InputMaybe<Scalars['String']['input']>;
+  /** Message shown to participants before they submit a solution. */
   submissionPreamble: InputMaybe<Scalars['String']['input']>;
   tagIds: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
   thumbnail: InputMaybe<Scalars['Upload']['input']>;
+  timeline: InputMaybe<UpdateTimelineInput>;
   title: InputMaybe<Scalars['String']['input']>;
+  /** Use average jury score instead of automated use-case metric. Requires jury system to work. */
+  useJuryScore: InputMaybe<Scalars['Boolean']['input']>;
   visibility: InputMaybe<ActivityVisibility>;
+};
+
+export type UpdateCompetitionMemberInput = {
+  asEntityId: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type UpdateCompetitionScoringCriterionInput = {
+  description: InputMaybe<Scalars['String']['input']>;
+  id: InputMaybe<Scalars['ID']['input']>;
+  title: Scalars['String']['input'];
+  weight: Scalars['Float']['input'];
+};
+
+export type UpdateCompetitionStageInput = {
+  /** Enables no-code system on competition. Requires jury system to work. */
+  noCode: InputMaybe<Scalars['Boolean']['input']>;
+  /**
+   * Only allow the competition host, the reviewer and the submission author to see the approval
+   * score.
+   */
+  privateApprovals: InputMaybe<Scalars['Boolean']['input']>;
+  /** Enables jury system on competition */
+  requiresApproval: InputMaybe<Scalars['Boolean']['input']>;
+  scoringCriteria: InputMaybe<Array<UpdateCompetitionScoringCriterionInput>>;
+  /** Show automated use-case metric. */
+  showMetric: InputMaybe<Scalars['Boolean']['input']>;
+  /** Message shown to participants before they submit a solution. */
+  submissionPreamble: InputMaybe<Scalars['String']['input']>;
+  /** Use average jury score instead of automated use-case metric. Requires jury system to work. */
+  useJuryScore: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type UpdateCompetitionTeamRequestInput = {
+  needs: InputMaybe<Scalars['String']['input']>;
+  skills: InputMaybe<Scalars['String']['input']>;
+  timezone: InputMaybe<Scalars['TimeZone']['input']>;
+};
+
+export type UpdateDatasetInput = {
+  localSlug: InputMaybe<Scalars['String']['input']>;
+  name: InputMaybe<Scalars['String']['input']>;
+  private: InputMaybe<Scalars['Boolean']['input']>;
+  shortDescription: InputMaybe<Scalars['String']['input']>;
+  tags: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type UpdateDatasetVersionInput = {
+  authors: InputMaybe<Array<DatasetVersionAuthorInput>>;
+  description: InputMaybe<Scalars['String']['input']>;
+  license: InputMaybe<Scalars['String']['input']>;
+  version: InputMaybe<Scalars['Semver']['input']>;
 };
 
 export type UpdateEventInput = {
@@ -3020,6 +4224,14 @@ export type UpdateSubmissionInput = {
   readme: InputMaybe<Scalars['String']['input']>;
 };
 
+export type UpdateTimelineInput = {
+  endDate: InputMaybe<Scalars['NaiveDate']['input']>;
+  online: InputMaybe<Scalars['Boolean']['input']>;
+  startDate: InputMaybe<Scalars['NaiveDate']['input']>;
+  steps: InputMaybe<Array<TimelineStepInput>>;
+  timezone: InputMaybe<Scalars['TimeZone']['input']>;
+};
+
 export type UpdateTopicInput = {
   description: InputMaybe<Scalars['String']['input']>;
   title: InputMaybe<Scalars['String']['input']>;
@@ -3059,6 +4271,7 @@ export type UseCase = Node & Project & {
   id: Scalars['ID']['output'];
   latest: Maybe<ProjectVersion>;
   name: Scalars['String']['output'];
+  stage: CompetitionStage;
   version: Maybe<ProjectVersion>;
   versions: ProjectVersionConnection;
   viewerCan: Scalars['Boolean']['output'];
@@ -3083,7 +4296,7 @@ export type UseCaseViewerCanArgs = {
   asEntity: InputMaybe<Scalars['UsernameOrID']['input']>;
 };
 
-export type User = Entity & Node & {
+export type User = DatasetVersionAuthor & Entity & Node & {
   __typename?: 'User';
   activities: ActivityConnection;
   badges: EntityBadgeConnection;
@@ -3092,6 +4305,7 @@ export type User = Entity & Node & {
   can: Scalars['Boolean']['output'];
   comments: CommentConnection;
   createdAt: Scalars['DateTime']['output'];
+  datasets: DatasetConnection;
   displayName: Scalars['String']['output'];
   email: Scalars['String']['output'];
   entities: UserEntitiesConnection;
@@ -3156,6 +4370,15 @@ export type UserCommentsArgs = {
 };
 
 
+export type UserDatasetsArgs = {
+  after: InputMaybe<Scalars['String']['input']>;
+  before: InputMaybe<Scalars['String']['input']>;
+  filters: InputMaybe<DatasetQueryFilters>;
+  first: InputMaybe<Scalars['Int']['input']>;
+  last: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type UserEntitiesArgs = {
   after: InputMaybe<Scalars['String']['input']>;
   before: InputMaybe<Scalars['String']['input']>;
@@ -3171,6 +4394,7 @@ export type UserOrganizationsArgs = {
   before: InputMaybe<Scalars['String']['input']>;
   first: InputMaybe<Scalars['Int']['input']>;
   last: InputMaybe<Scalars['Int']['input']>;
+  search: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -3194,6 +4418,7 @@ export type UserSubjectSubscriptionsArgs = {
 
 export type UserSubmissionsArgs = {
   after: InputMaybe<Scalars['String']['input']>;
+  allStages: InputMaybe<Scalars['Boolean']['input']>;
   before: InputMaybe<Scalars['String']['input']>;
   competitionId: InputMaybe<Scalars['ID']['input']>;
   first: InputMaybe<Scalars['Int']['input']>;

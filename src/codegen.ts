@@ -40,6 +40,7 @@ const config: CodegenConfig = {
           Upload: "{ filename: string, content_type?: string, content: File  }",
           Url: "URL",
           UUID: "string",
+          TimeZone: "String",
         },
         avoidOptionals: {
           field: true,
