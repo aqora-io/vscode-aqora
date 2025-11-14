@@ -14,6 +14,14 @@
 - update apollo graphql lib - (02d8690) - Angel Dijoux
 
 - - -
+## v1.4.0 - 2025-11-14
+#### Features
+- list datasets - (70cd7f2) - Angel-Dijoux
+#### Miscellaneous Chores
+- update gql schema - (749b673) - Angel-Dijoux
+
+- - -
+
 ## v1.3.3 - 2025-04-18
 #### Bug Fixes
 - deps vulnerabilities - (f344dad) - Angel Dijoux
